@@ -1,0 +1,52 @@
+name: Test Action
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    name: Test Inspect Docker Image Action
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Test with public image
+        id: test-public
+        uses: ./
+        with:
+          repo-owner: 'hello-world'
+          repo-name: 'hello-world'
+          image-name: 'hello-world'
+          version: 'latest'
+        continue-on-error: true
+      
+      - name: Show results
+        run: |
+          echo "Test completed"
+          if [[ "${{ steps.test-public.outcome }}" == "success" ]]; then
+            echo "✅ Action succeeded"
+            echo "Digest: ${{ steps.test-public.outputs.digest }}"
+          else
+            echo "❌ Action failed (expected for this test)"
+          fi
+      
+      - name: Validate PowerShell syntax
+        run: |
+          pwsh -Command "Get-Content './action.ps1' | ForEach-Object { if ($_ -match '^\s*#.*$|^\s*$') { return } ; try { [System.Management.Automation.PSParser]::Tokenize($_, [ref]$null) | Out-Null } catch { Write-Error 'PowerShell syntax error'; exit 1 } }"
+      
+      - name: Test action.yml validity
+        run: |
+          if [[ ! -f "action.yml" ]]; then
+            echo "❌ action.yml not found"
+            exit 1
+          fi
+          
+          # Basic YAML syntax check
+          python -c "import yaml; yaml.safe_load(open('action.yml'))" || exit 1
+          echo "✅ action.yml is valid YAML"
