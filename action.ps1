@@ -78,12 +78,12 @@ function Get-DockerImageDigest {
 }
 
 try {
-    Write-Output "🚀 Starting batch Docker image digest resolution..."
+    Write-Host "🚀 Starting batch Docker image digest resolution..."
     
     # Log full input
-    Write-Output ""
-    Write-Output "ImageUrls: $ImageUrls"
-    Write-Output ""
+    Write-Host ""
+    Write-Host "ImageUrls: $ImageUrls"
+    Write-Host ""
 
 
     Write-Host "Image URLs:"
@@ -129,15 +129,15 @@ try {
     # Assign the parsed image URLs to the variable expected by the rest of the script
     $images = $imageUrlList
 
-    Write-Output "📋 Processing $($images.Count) image(s)..."
+    Write-Host "📋 Processing $($images.Count) image(s)..."
     
     # Initialize results as array to preserve order
     $results = @()
     
     # Process each image URL
     foreach ($imageUrl in $images) {
-        Write-Output ""
-        Write-Output "🔄 Processing: $imageUrl"
+        Write-Host ""
+        Write-Host "🔄 Processing: $imageUrl"
         
         # Validate that we have a non-empty string
         if ([string]::IsNullOrWhiteSpace($imageUrl)) {
@@ -165,26 +165,26 @@ try {
     }
     
     # Output results
-    Write-Output ""
-    Write-Output "📊 Summary:"
+    Write-Host ""
+    Write-Host "📊 Summary:"
     $successCount = $results.Count
-    Write-Output "✅ All $successCount image(s) processed successfully!"
+    Write-Host "✅ All $successCount image(s) processed successfully!"
     
     if ($GitHubOutput) {
         # Output JSON results - always as array format
         $jsonOutput = $results | ConvertTo-Json -Compress -AsArray
         "digests=$jsonOutput" | Out-File -FilePath $GitHubOutput -Append -Encoding utf8
-        Write-Output "📝 JSON results written to GitHub output"
+        Write-Host "📝 JSON results written to GitHub output"
     }
     
     # Log full output
-    Write-Output ""
-    Write-Output "📤 FULL OUTPUT:"
+    Write-Host ""
+    Write-Host "📤 FULL OUTPUT:"
     $formattedOutput = $results | ConvertTo-Json -Depth 10 -AsArray
     Write-Output $formattedOutput
     
-    Write-Output ""
-    Write-Output "🎉 Batch digest resolution completed successfully!"
+    Write-Host ""
+    Write-Host "🎉 Batch digest resolution completed successfully!"
     
 } catch {
     Write-Error "❌ Batch digest resolution failed: $($_.Exception.Message)"
