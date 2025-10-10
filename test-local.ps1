@@ -1,5 +1,5 @@
-# Test script for the refactored action using newline-separated image URLs
-# This demonstrates the new user-friendly approach
+# Test script for the action - now returns complete digest URLs
+# This demonstrates getting immutable digest URLs instead of mutable tag URLs
 
 # Test with various registries using newline-separated format
 $imageUrls = @'
@@ -13,7 +13,10 @@ Write-Output "Using temporary output file: $tempOutputFile"
 
 # Run the action script
 try {
-    Write-Output "🧪 Testing the refactored action with newline-separated image URLs..."
+    Write-Output "🧪 Testing the action - now returns complete digest URLs..."
+    Write-Output "Input: Tag-based image URLs"
+    Write-Output "Output: Complete digest URLs (immutable references)"
+    Write-Output ""
     Write-Output "Images to test:"
     Write-Output "  1. ghcr.io/optivem/atdd-accelerator-template-dotnet/monolith:latest"
     Write-Output "  2. nginx:latest"

@@ -29,14 +29,14 @@ Works with any Docker-compatible registry:
 
 | Output | Description |
 |--------|-------------|
-| `image-digests` | JSON object mapping image URLs to their resolved digests |
+| `image-digest-urls` | JSON object mapping original image URLs to their complete digest URLs |
 
 ### Output Structure
 
 ```json
 {
-  "nginx:latest": "sha256:abc123...",
-  "ghcr.io/owner/repo/app:latest": "sha256:def456..."
+  "nginx:latest": "nginx@sha256:abc123...",
+  "ghcr.io/owner/repo/app:latest": "ghcr.io/owner/repo/app@sha256:def456..."
 }
 ```
 
@@ -61,10 +61,10 @@ jobs:
             ghcr.io/myorg/frontend:latest
             mcr.microsoft.com/dotnet/aspnet:8.0
       
-      - name: Use Resolved Digests
+      - name: Use Resolved Digest URLs
         run: |
-          echo "Nginx digest: ${{ fromJson(steps.resolve.outputs.image-digests)['nginx:latest'] }}"
-          echo "Frontend digest: ${{ fromJson(steps.resolve.outputs.image-digests)['ghcr.io/myorg/frontend:latest'] }}"
+          echo "Nginx digest URL: ${{ fromJson(steps.resolve.outputs.image-digest-urls)['nginx:latest'] }}"
+          echo "Frontend digest URL: ${{ fromJson(steps.resolve.outputs.image-digest-urls)['ghcr.io/myorg/frontend:latest'] }}"
 ```
 
 ### Docker Hub Images

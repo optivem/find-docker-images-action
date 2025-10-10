@@ -30,14 +30,14 @@ jobs:
           echo "Test completed"
           if [[ "${{ steps.test-multi.outcome }}" == "success" ]]; then
             echo "✅ Action succeeded"
-            echo "JSON Output: ${{ steps.test-multi.outputs.image-digests }}"
+            echo "JSON Output: ${{ steps.test-multi.outputs.image-digest-urls }}"
             
-            # Extract digests using jq (new simplified format)
-            RESULTS='${{ steps.test-multi.outputs.image-digests }}'
-            NGINX_DIGEST=$(echo "$RESULTS" | jq -r '."nginx:latest" // "not-found"')
-            HELLO_DIGEST=$(echo "$RESULTS" | jq -r '."hello-world:latest" // "not-found"')
-            echo "Nginx Digest: $NGINX_DIGEST"
-            echo "Hello World Digest: $HELLO_DIGEST"
+            # Extract digest URLs using jq
+            RESULTS='${{ steps.test-multi.outputs.image-digest-urls }}'
+            NGINX_DIGEST_URL=$(echo "$RESULTS" | jq -r '."nginx:latest" // "not-found"')
+            HELLO_DIGEST_URL=$(echo "$RESULTS" | jq -r '."hello-world:latest" // "not-found"')
+            echo "Nginx Digest URL: $NGINX_DIGEST_URL"
+            echo "Hello World Digest URL: $HELLO_DIGEST_URL"
           else
             echo "❌ Action failed"
             echo "This might indicate an issue with the action"

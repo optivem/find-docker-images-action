@@ -119,7 +119,20 @@ try {
         # Get digest - any failure will cause immediate exit
         $digest = Get-DockerImageDigest -ImageUrl $imageUrl
         
-        $results[$imageUrl] = $digest
+        # Create the digest URL by replacing tag with digest
+        $digestUrl = ""
+        if ($imageUrl -match '^(.+):([^@]+)$') {
+            # Image has a tag, replace it with digest
+            $digestUrl = $matches[1] + "@" + $digest
+        } elseif ($imageUrl -match '^(.+)@.+$') {
+            # Image already has a digest, replace it with new digest
+            $digestUrl = $matches[1] + "@" + $digest
+        } else {
+            # No tag specified, assume :latest and replace with digest
+            $digestUrl = $imageUrl + "@" + $digest
+        }
+        
+        $results[$imageUrl] = $digestUrl
     }
     
     # Output results

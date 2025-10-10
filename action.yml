@@ -9,8 +9,8 @@ inputs:
     description: 'Newline-separated list of image URLs to resolve digests for'
     required: true
 outputs:
-  image-digests:
-    description: 'JSON object mapping image URLs to their resolved SHA256 digests'
+  image-digest-urls:
+    description: 'JSON object mapping original image URLs to their complete digest URLs'
     value: ${{ steps.get-digests.outputs.digests }}
 runs:
   using: 'composite'
