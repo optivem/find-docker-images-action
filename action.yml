@@ -1,31 +1,22 @@
-name: 'Inspect Docker Image'
-description: 'Extracts the Docker image digest from GitHub Container Registry'
+name: 'Inspect Docker Images'
+description: 'Extracts Docker image digests from GitHub Container Registry for multiple images'
 author: 'Optivem'
 branding:
   icon: 'search'
   color: 'blue'
 inputs:
-  repo-owner:
-    description: 'GitHub repository owner (organization or user)'
-    required: true
-  repo-name:
-    description: 'GitHub repository name'
-    required: true
-  image-name:
-    description: 'Docker image name'
-    required: true
-  version:
-    description: 'Docker image tag or version (e.g., v20241008-rc1)'
+  images:
+    description: 'JSON array of images to inspect. Each image should have: repo-owner, repo-name, image-name, version'
     required: true
 outputs:
-  digest:
-    description: 'The exact digest of the latest Docker image'
-    value: ${{ steps.get-digest.outputs.digest }}
+  digests-json:
+    description: 'JSON object containing all image digests'
+    value: ${{ steps.get-digests.outputs.digests-json }}
 runs:
   using: 'composite'
   steps:
-    - name: Get latest image digest
-      id: get-digest
+    - name: Get image digests
+      id: get-digests
       shell: pwsh
       run: |
-        & "${{ github.action_path }}/action.ps1" -RepoOwner "${{ inputs.repo-owner }}" -RepoName "${{ inputs.repo-name }}" -ImageName "${{ inputs.image-name }}" -Version "${{ inputs.version }}"
+        & "${{ github.action_path }}/action.ps1" -ImagesJson '${{ inputs.images }}'

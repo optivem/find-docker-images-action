@@ -10,30 +10,40 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    name: Test Inspect Docker Image Action
+    name: Test Inspect Docker Images Action
     
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       
-      - name: Test with public image
-        id: test-public
+      - name: Test with multiple images
+        id: test-multi
         uses: ./
         with:
-          repo-owner: 'hello-world'
-          repo-name: 'hello-world'
-          image-name: 'hello-world'
-          version: 'latest'
+          images: |
+            [
+              {
+                "repo-owner": "library",
+                "repo-name": "hello-world",
+                "image-name": "hello-world",
+                "version": "latest"
+              }
+            ]
         continue-on-error: true
       
       - name: Show results
         run: |
           echo "Test completed"
-          if [[ "${{ steps.test-public.outcome }}" == "success" ]]; then
+          if [[ "${{ steps.test-multi.outcome }}" == "success" ]]; then
             echo "✅ Action succeeded"
-            echo "Digest: ${{ steps.test-public.outputs.digest }}"
+            echo "JSON Output: ${{ steps.test-multi.outputs.digests-json }}"
+            
+            # Extract digest using jq
+            RESULTS='${{ steps.test-multi.outputs.digests-json }}'
+            HELLO_DIGEST=$(echo "$RESULTS" | jq -r '."hello-world".digest // "not-found"')
+            echo "Hello World Digest: $HELLO_DIGEST"
           else
-            echo "❌ Action failed (expected for this test)"
+            echo "❌ Action failed (this might be expected for public test images)"
           fi
       
       - name: Validate PowerShell syntax
