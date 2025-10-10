@@ -1,38 +1,51 @@
 # Resolve Latest Docker Digests Action
 
-A GitHub Action that resolves the latest Docker image digests from GitHub Container Registry for multiple images in batch.
+> **⚠️ Repository Renamed**: This action was previously located at `optivem/inspect-docker-action`. Please update your workflows to use `optivem/resolve-latest-docker-digests-action@v1` instead.
+
+A GitHub Action that resolves Docker image digests from any container registry for multiple images in batch.
 
 ## Description
 
-This action processes multiple Docker images from GitHub Container Registry and resolves their exact digests. Perfect for microservices architectures where you need to get digests for frontend applications, multiple backend services, and other components all at once.
+This action processes multiple Docker images from any container registry (Docker Hub, GitHub Container Registry, Azure Container Registry, AWS ECR, etc.) and resolves their exact digests. Perfect for microservices architectures where you need to get digests for multiple services from various registries.
 
 ## Inputs
 
 | Input | Description | Required | Example |
 |-------|-------------|----------|---------|
-| `images` | JSON array of images to resolve. Each image should have: `repoOwner`, `repoName`, `imageName` (version is always "latest") | Yes | See examples below |
+| `images` | JSON array of image URLs to resolve digests for | Yes | `["nginx:latest", "ghcr.io/owner/repo/image:latest"]` |
 
-### Image Object Structure
+### Supported Registries
 
-Each image in the JSON array should have:
-- `repoOwner`: GitHub repository owner (organization or user)
-- `repoName`: GitHub repository name  
-- `imageName`: Docker image name
-
-**Note**: The version is always set to "latest" automatically.
+Works with any Docker-compatible registry:
+- **Docker Hub**: `nginx:latest`, `ubuntu:22.04`
+- **GitHub Container Registry**: `ghcr.io/owner/repo/image:latest`
+- **Microsoft Container Registry**: `mcr.microsoft.com/dotnet/aspnet:8.0`
+- **Azure Container Registry**: `myregistry.azurecr.io/myapp:latest`
+- **AWS Elastic Container Registry**: `123456789012.dkr.ecr.us-east-1.amazonaws.com/myapp:latest`
+- **Google Container Registry**: `gcr.io/project-id/image:latest`
+- **Private registries**: `my-registry.com/my-org/my-app:v1.2.3`
 
 ## Outputs
 
 | Output | Description |
 |--------|-------------|
-| `digests` | JSON object containing all resolved image digests with status information |
+| `digests` | JSON object mapping image URLs to their resolved digests |
+
+### Output Structure
+
+```json
+{
+  "nginx:latest": "sha256:abc123...",
+  "ghcr.io/owner/repo/app:latest": "sha256:def456..."
+}
+```
 
 ## Usage Examples
 
-### Multiple Microservices from Different Repositories
+### Basic Example - Mixed Registries
 
 ```yaml
-name: Resolve All Service Digests
+name: Resolve Image Digests
 on: [push]
 
 jobs:
@@ -40,274 +53,157 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Resolve Docker Image Digests
-        id: inspect
+        id: resolve
         uses: optivem/resolve-latest-docker-digests-action@v1
         with:
           images: |
             [
-              {
-                "repoOwner": "myorg",
-                "repoName": "frontend-repo",
-                "imageName": "frontend"
-              },
-              {
-                "repoOwner": "myorg", 
-                "repoName": "user-service-repo",
-                "imageName": "user-service"
-              },
-              {
-                "repoOwner": "myorg",
-                "repoName": "order-service-repo", 
-                "imageName": "order-service"
-              },
-              {
-                "repoOwner": "myorg",
-                "repoName": "payment-service-repo",
-                "imageName": "payment-service"
-              }
+              "nginx:latest",
+              "ghcr.io/myorg/frontend:latest",
+              "mcr.microsoft.com/dotnet/aspnet:8.0"
             ]
       
-      - name: Use the digests
+      - name: Use Resolved Digests
         run: |
-          # Extract individual digests from JSON
-          RESULTS='${{ steps.inspect.outputs.digests }}'
-          FRONTEND_DIGEST=$(echo "$RESULTS" | jq -r '.frontend.digest')
-          USER_SERVICE_DIGEST=$(echo "$RESULTS" | jq -r '."user-service".digest')
-          ORDER_SERVICE_DIGEST=$(echo "$RESULTS" | jq -r '."order-service".digest')
-          
-          echo "Frontend: $FRONTEND_DIGEST"
-          echo "User Service: $USER_SERVICE_DIGEST"
-          echo "Order Service: $ORDER_SERVICE_DIGEST"
-          echo "All results: $RESULTS"
+          echo "Nginx digest: ${{ fromJson(steps.resolve.outputs.digests)['nginx:latest'] }}"
+          echo "Frontend digest: ${{ fromJson(steps.resolve.outputs.digests)['ghcr.io/myorg/frontend:latest'] }}"
 ```
 
-### Same Repository, Multiple Images
+### Docker Hub Images
 
 ```yaml
-name: Resolve Multi-Container App Digests
-on: [push]
-
-jobs:
-  resolve-digests:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Resolve Multiple Images from Same Repo
-        id: inspect
-        uses: optivem/resolve-latest-docker-digests-action@v1
-        with:
-          images: |
-            [
-              {
-                "repoOwner": "myorg",
-                "repoName": "my-app",
-                "imageName": "frontend"
-              },
-              {
-                "repoOwner": "myorg", 
-                "repoName": "my-app",
-                "imageName": "backend"
-              },
-              {
-                "repoOwner": "myorg",
-                "repoName": "my-app", 
-                "imageName": "worker"
-              }
-            ]
-      
-      - name: Deploy with exact digests
-        run: |
-          # Extract digests from JSON
-          RESULTS='${{ steps.inspect.outputs.digests }}'
-          FRONTEND_DIGEST=$(echo "$RESULTS" | jq -r '.frontend.digest')
-          BACKEND_DIGEST=$(echo "$RESULTS" | jq -r '.backend.digest')
-          WORKER_DIGEST=$(echo "$RESULTS" | jq -r '.worker.digest')
-          
-          echo "Deploying frontend@$FRONTEND_DIGEST"
-          echo "Deploying backend@$BACKEND_DIGEST"
-          echo "Deploying worker@$WORKER_DIGEST"
-```
-
-### Security Scanning Example
-
-```yaml
-name: Security Scan All Services
-on: [push]
-
-jobs:
-  scan:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Resolve Service Digests
-        id: inspect
-        uses: optivem/resolve-latest-docker-digests-action@v1
-        with:
-          images: |
-            [
-              {
-                "repoOwner": "myorg",
-                "repoName": "services",
-                "imageName": "api"
-              },
-              {
-                "repoOwner": "myorg",
-                "repoName": "services", 
-                "imageName": "web"
-              }
-            ]
-      
-      - name: Scan API with exact digest
-        run: |
-          RESULTS='${{ steps.inspect.outputs.digests }}'
-          API_DIGEST=$(echo "$RESULTS" | jq -r '.api.digest')
-          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
-            aquasec/trivy image ghcr.io/myorg/services/api@$API_DIGEST
-      
-      - name: Scan Web with exact digest  
-        run: |
-          RESULTS='${{ steps.inspect.outputs.digests }}'
-          WEB_DIGEST=$(echo "$RESULTS" | jq -r '.web.digest')
-          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
-            aquasec/trivy image ghcr.io/myorg/services/web@$WEB_DIGEST
-```
-
-### Using GitHub Context Variables
-
-```yaml
-- name: Resolve Current Repository Images
-  id: inspect
+- name: Resolve Docker Hub Images
   uses: optivem/resolve-latest-docker-digests-action@v1
   with:
     images: |
       [
-        {
-          "repoOwner": "${{ github.repository_owner }}",
-          "repoName": "${{ github.event.repository.name }}",
-          "imageName": "frontend"
-        },
-        {
-          "repoOwner": "${{ github.repository_owner }}",
-          "repoName": "${{ github.event.repository.name }}",
-          "imageName": "backend"
-        }
+        "nginx:latest",
+        "redis:alpine",
+        "postgres:15"
       ]
-
-- name: Use resolved digests
-  run: |
-    RESULTS='${{ steps.inspect.outputs.digests }}'
-    echo "Results: $RESULTS"
 ```
 
-### Using JSON Output for Dynamic Processing
+### GitHub Container Registry
 
 ```yaml
-- name: Process All Digests
-  run: |
-    # Parse the JSON output
-    RESULTS='${{ steps.inspect.outputs.digests }}'
-    echo "All digests: $RESULTS"
-    
-    # Extract specific digests using jq
-    echo "$RESULTS" | jq -r 'to_entries[] | "\(.key): \(.value.digest)"'
-    
-    # Check status of each image
-    echo "$RESULTS" | jq -r 'to_entries[] | select(.value.status == "failed") | "Failed: \(.key) - \(.value.error)"'
-    
-    # Get only successful digests
-    echo "$RESULTS" | jq -r 'to_entries[] | select(.value.status == "success") | "\(.key)=\(.value.digest)"'
+- name: Resolve GitHub Container Registry Images
+  uses: optivem/resolve-latest-docker-digests-action@v1
+  with:
+    images: |
+      [
+        "ghcr.io/myorg/frontend:latest",
+        "ghcr.io/myorg/backend:latest",
+        "ghcr.io/myorg/worker:latest"
+      ]
 ```
 
-## JSON Output Format
-
-The `digests` output contains a JSON object where each key is the image name and the value contains:
-
-```json
-{
-  "frontend": {
-    "digest": "sha256:abc123...",
-    "status": "success",
-    "image": "ghcr.io/myorg/app/frontend:latest"
-  },
-  "backend": {
-    "digest": "sha256:def456...",
-    "status": "success", 
-    "image": "ghcr.io/myorg/app/backend:latest"
-  },
-  "worker": {
-    "digest": null,
-    "status": "failed",
-    "error": "Failed to pull Docker image: ghcr.io/myorg/app/worker:latest",
-    "image": "ghcr.io/myorg/app/worker:latest"
-  }
-}
-```
-
-### Accessing Individual Digests
-
-```bash
-# Extract a specific digest
-FRONTEND_DIGEST=$(echo "$RESULTS" | jq -r '.frontend.digest')
-
-# Check if an image was successful
-STATUS=$(echo "$RESULTS" | jq -r '.frontend.status')
-if [ "$STATUS" = "success" ]; then
-  echo "Frontend processed successfully"
-fi
-
-# Get all successful images
-jq -r 'to_entries[] | select(.value.status == "success") | .key' <<< "$RESULTS"
-```
-
-## How It Works
-
-1. **JSON Parsing**: Parses the input JSON array of images
-2. **Batch Processing**: Processes each image in sequence
-3. **Image Pull**: Uses `docker pull` to download each specified image
-4. **Digest Resolution**: Inspects each image to resolve its SHA256 digest
-5. **JSON Output**: Creates a comprehensive JSON object with all results and status information
-6. **Error Handling**: Continues processing other images if one fails
-
-## Requirements
-
-- The runner must have Docker installed and accessible
-- The Docker images must be publicly accessible or the runner must be authenticated to GHCR
-- All specified images and tags must exist in their respective repositories
-
-## Authentication for Private Images
-
-If your Docker images are private, ensure your workflow is authenticated with GitHub Container Registry:
+### Current Repository Images
 
 ```yaml
-- name: Log in to GitHub Container Registry
-  uses: docker/login-action@v2
+- name: Resolve Current Repository Images
+  uses: optivem/resolve-latest-docker-digests-action@v1
+  with:
+    images: |
+      [
+        "ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}/app:latest",
+        "ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}/worker:latest"
+      ]
+```
+
+### Multiple Registries
+
+```yaml
+- name: Resolve Images from Multiple Registries
+  uses: optivem/resolve-latest-docker-digests-action@v1
+  with:
+    images: |
+      [
+        "nginx:latest",
+        "ghcr.io/myorg/app:latest",
+        "mcr.microsoft.com/dotnet/aspnet:8.0",
+        "myregistry.azurecr.io/myapp:latest"
+      ]
+```
+
+## Working with Private Registries
+
+For private registries, make sure Docker is authenticated before running this action:
+
+```yaml
+- name: Login to GitHub Container Registry
+  uses: docker/login-action@v3
   with:
     registry: ghcr.io
     username: ${{ github.actor }}
     password: ${{ secrets.GITHUB_TOKEN }}
 
-- name: Inspect Private Images
+- name: Resolve Private Images
   uses: optivem/resolve-latest-docker-digests-action@v1
   with:
     images: |
       [
-        {
-          "repoOwner": "myorg",
-          "repoName": "private-repo",
-          "imageName": "private-service"
-        }
+        "ghcr.io/myorg/private-app:latest"
       ]
 ```
 
 ## Error Handling
 
-- If any image fails to process, the action will continue with remaining images
-- The action exits with code 1 if any images failed
-- Failed images are included in the JSON output with error details and `"status": "failed"`
-- Successful images have `"status": "success"` and contain the digest
+The action uses **fail-fast behavior** - it will stop immediately on the first image that fails to resolve. This ensures:
+
+- ✅ **Quick feedback**: Immediate failure detection
+- ✅ **Resource efficiency**: Don't waste time on remaining images when one fails
+- ✅ **Clear debugging**: Focus on the specific image that failed
+
+### Common Error Scenarios
+
+1. **Image not found**: Returns exit code 1 with clear error message
+2. **Authentication required**: Ensure you're logged in to the registry
+3. **Network issues**: Temporary failures will cause the action to fail
+4. **Invalid image URL**: Malformed URLs will be rejected
+
+## Why Use Digests?
+
+Docker digests provide immutable references to specific image versions:
+
+- **🔒 Immutable**: Digests never change, unlike tags
+- **🔍 Precise**: Points to exact image content  
+- **🛡️ Secure**: Prevents tag-based attacks
+- **📋 Auditable**: Know exactly what's deployed
+
+Example of using resolved digests:
+```yaml
+# Instead of: nginx:latest (mutable)
+# Use: nginx@sha256:abc123... (immutable)
+```
+
+## Requirements
+
+- Docker must be available in the runner environment
+- For private registries, appropriate authentication must be configured
+- Images must support digest resolution (most modern registries do)
+
+## Contributing
+
+1. Fork the repository
+2. Clone your fork:
+   ```bash
+   git clone https://github.com/YOUR-USERNAME/resolve-latest-docker-digests-action.git
+   cd resolve-latest-docker-digests-action
+   ```
+
+3. Make sure you have PowerShell installed for testing the script locally
+
+4. Test the action locally by running the PowerShell script:
+   ```powershell
+   .\test-refactored.ps1
+   ```
+
+5. Create a Pull Request with your changes
 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Contributing
+## Changelog
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+See [CHANGELOG.md](CHANGELOG.md) for a complete list of changes.

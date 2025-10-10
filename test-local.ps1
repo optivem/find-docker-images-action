@@ -1,30 +1,27 @@
-# Test script to run the action locally
-# This simulates how GitHub Actions would call your script
-# NOTE: Script now uses fail-fast behavior - stops on first error
+# Test script for the refactored action using image URLs
+# This demonstrates the new flexible approach
 
-# Your image configuration
+# Test with various registries and image URLs
 $imagesJson = @'
 [
-  {
-    "repoOwner": "optivem",
-    "repoName": "atdd-accelerator-template-dotnet",
-    "imageName": "monolith"
-  }
+  "ghcr.io/optivem/atdd-accelerator-template-dotnet/monolith:latest",
+  "nginx:latest"
 ]
 '@
 
 # Create a temporary output file to simulate GITHUB_OUTPUT
-$tempOutputFile = Join-Path $env:TEMP "github_output_test.txt"
+$tempOutputFile = Join-Path $env:TEMP "github_output_refactored_test.txt"
 Write-Output "Using temporary output file: $tempOutputFile"
 
 # Run the action script
 try {
-    Write-Output "🧪 Testing the action locally..."
-    Write-Output "Repository: optivem/resolve-latest-docker-digests"
-    Write-Output "Image: monolith"
+    Write-Output "🧪 Testing the refactored action with image URLs..."
+    Write-Output "Images to test:"
+    Write-Output "  1. ghcr.io/optivem/atdd-accelerator-template-dotnet/monolith:latest"
+    Write-Output "  2. nginx:latest"
     Write-Output ""
     
-    # Call the action script with your parameters
+    # Call the action script with image URLs
     & ".\action.ps1" -ImagesJson $imagesJson -GitHubOutput $tempOutputFile
     
     Write-Output ""

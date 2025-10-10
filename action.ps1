@@ -11,38 +11,25 @@ $ErrorActionPreference = "Stop"
 
 function Get-DockerImageDigest {
     param(
-        [string]$RepoOwner,
-        [string]$RepoName,
-        [string]$ImageName,
-        [string]$DisplayName = $null
+        [string]$ImageUrl
     )
     
-    if ([string]::IsNullOrEmpty($DisplayName)) {
-        $DisplayName = $ImageName
-    }
-    
     try {
-        # Always use "latest" as the version
-        $Version = "latest"
-        
-        # Construct image tag
-        $IMAGE = "ghcr.io/$RepoOwner/$RepoName/$ImageName"
-        $IMAGE_WITH_TAG = "$IMAGE" + ":" + "$Version"
-        Write-Host "🔍 [$DisplayName] Resolving image: $IMAGE_WITH_TAG"
+        Write-Host "🔍 Resolving image: $ImageUrl"
 
         # Pull the image to get the exact digest
-        Write-Host "📥 [$DisplayName] Pulling image to get digest..."
-        docker pull $IMAGE_WITH_TAG | Out-Host
+        Write-Host "📥 Pulling image to get digest..."
+        docker pull $ImageUrl | Out-Host
         
         if ($LASTEXITCODE -ne 0) {
-            throw "Failed to pull Docker image: $IMAGE_WITH_TAG"
+            throw "Failed to pull Docker image: $ImageUrl"
         }
 
-        # Get the image digest using a more reliable method
-        Write-Host "🔎 [$DisplayName] Resolving digest..."
+        # Get the image digest using docker inspect
+        Write-Host "🔎 Resolving digest..."
         
         # First try to get digest directly from docker inspect
-        $inspectResult = docker inspect $IMAGE_WITH_TAG --format='{{index .RepoDigests 0}}' 2>$null
+        $inspectResult = docker inspect $ImageUrl --format='{{index .RepoDigests 0}}' 2>$null
         
         if ($LASTEXITCODE -eq 0 -and ![string]::IsNullOrEmpty($inspectResult)) {
             # Extract just the digest part (after @)
@@ -53,15 +40,15 @@ function Get-DockerImageDigest {
             }
         } else {
             # Fallback to JSON parsing
-            Write-Host "🔄 [$DisplayName] Fallback to JSON parsing..."
-            $inspectJson = docker inspect $IMAGE_WITH_TAG | ConvertFrom-Json
+            Write-Host "🔄 Fallback to JSON parsing..."
+            $inspectJson = docker inspect $ImageUrl | ConvertFrom-Json
             
             if ($LASTEXITCODE -ne 0) {
-                throw "Failed to inspect Docker image: $IMAGE_WITH_TAG"
+                throw "Failed to inspect Docker image: $ImageUrl"
             }
             
             if ($inspectJson.Count -eq 0 -or -not $inspectJson[0].RepoDigests -or $inspectJson[0].RepoDigests.Count -eq 0) {
-                throw "No digest found for image: $IMAGE_WITH_TAG. The image may not be from a registry that supports digests."
+                throw "No digest found for image: $ImageUrl. The image may not be from a registry that supports digests."
             }
             
             $repoDigest = $inspectJson[0].RepoDigests[0]
@@ -73,19 +60,19 @@ function Get-DockerImageDigest {
         }
         
         if ([string]::IsNullOrEmpty($DIGEST)) {
-            throw "Failed to extract digest from image: $IMAGE_WITH_TAG"
+            throw "Failed to extract digest from image: $ImageUrl"
         }
         
         # Validate digest format (should be sha256:...)
         if ($DIGEST -notmatch '^sha256:[a-f0-9]{64}$') {
-            Write-Host "⚠️ [$DisplayName] Warning: Digest format may be unexpected: $DIGEST"
+            Write-Host "⚠️ Warning: Digest format may be unexpected: $DIGEST"
         }
         
-        Write-Host "✅ [$DisplayName] Image digest resolved: $DIGEST"
+        Write-Host "✅ Image digest resolved: $DIGEST"
         return $DIGEST
     }
     catch {
-        Write-Error "❌ [$DisplayName] Error processing $IMAGE_WITH_TAG`: $($_.Exception.Message)"
+        Write-Error "❌ Error processing $ImageUrl`: $($_.Exception.Message)"
         throw
     }
 }
@@ -100,7 +87,7 @@ try {
     Write-Output "GitHubOutput: $GitHubOutput"
     Write-Output ""
     
-    # Parse the JSON input
+    # Parse the JSON input - now expecting array of strings
     $images = $ImagesJson | ConvertFrom-Json
     
     # Log parsed input structure
@@ -118,26 +105,21 @@ try {
     # Initialize results
     $results = @{}
     
-    # Process each image
-    foreach ($image in $images) {
-        $imageKey = $image.imageName
+    # Process each image URL
+    foreach ($imageUrl in $images) {
         Write-Output ""
-        Write-Output "🔄 Processing: $imageKey"
+        Write-Output "🔄 Processing: $imageUrl"
         
-        # Validate required properties
-        if (-not $image.repoOwner -or -not $image.repoName -or -not $image.imageName) {
-            Write-Error "❌ Missing required properties for image '$imageKey'. Each image must have: repoOwner, repoName, imageName"
+        # Validate that we have a non-empty string
+        if ([string]::IsNullOrWhiteSpace($imageUrl)) {
+            Write-Error "❌ Empty or invalid image URL provided"
             exit 1
         }
         
         # Get digest - any failure will cause immediate exit
-        $digest = Get-DockerImageDigest -RepoOwner $image.repoOwner -RepoName $image.repoName -ImageName $image.imageName -DisplayName $imageKey
+        $digest = Get-DockerImageDigest -ImageUrl $imageUrl
         
-        $results[$imageKey] = @{
-            digest = $digest
-            status = "success"
-            image = "ghcr.io/$($image.repoOwner)/$($image.repoName)/$($image.imageName):latest"
-        }
+        $results[$imageUrl] = $digest
     }
     
     # Output results

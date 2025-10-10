@@ -1,16 +1,16 @@
 name: 'Resolve Latest Docker Digests'
-description: 'Resolves the latest Docker image digests from GitHub Container Registry for multiple images'
+description: 'Resolves Docker image digests from any container registry for multiple images'
 author: 'Optivem'
 branding:
   icon: 'search'
   color: 'blue'
 inputs:
   images:
-    description: 'JSON array of images to resolve. Each image should have: repoOwner, repoName, imageName (version is always "latest")'
+    description: 'JSON array of image URLs to resolve digests for (e.g., ["nginx:latest", "ghcr.io/owner/repo/image:latest"])'
     required: true
 outputs:
   digests:
-    description: 'JSON object containing all resolved image digests'
+    description: 'JSON object mapping image URLs to their resolved SHA256 digests'
     value: ${{ steps.get-digests.outputs.digests }}
 runs:
   using: 'composite'
