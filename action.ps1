@@ -28,18 +28,18 @@ function Get-DockerImageDigest {
         # Construct image tag
         $IMAGE = "ghcr.io/$RepoOwner/$RepoName/$ImageName"
         $IMAGE_WITH_TAG = "$IMAGE" + ":" + "$Version"
-        Write-Output "🔍 [$DisplayName] Resolving image: $IMAGE_WITH_TAG"
+        Write-Host "🔍 [$DisplayName] Resolving image: $IMAGE_WITH_TAG"
 
         # Pull the image to get the exact digest
-        Write-Output "📥 [$DisplayName] Pulling image to get digest..."
-        docker pull $IMAGE_WITH_TAG
+        Write-Host "📥 [$DisplayName] Pulling image to get digest..."
+        docker pull $IMAGE_WITH_TAG | Out-Host
         
         if ($LASTEXITCODE -ne 0) {
             throw "Failed to pull Docker image: $IMAGE_WITH_TAG"
         }
 
         # Get the image digest using a more reliable method
-        Write-Output "🔎 [$DisplayName] Resolving digest..."
+        Write-Host "🔎 [$DisplayName] Resolving digest..."
         
         # First try to get digest directly from docker inspect
         $inspectResult = docker inspect $IMAGE_WITH_TAG --format='{{index .RepoDigests 0}}' 2>$null
@@ -53,7 +53,7 @@ function Get-DockerImageDigest {
             }
         } else {
             # Fallback to JSON parsing
-            Write-Output "🔄 [$DisplayName] Fallback to JSON parsing..."
+            Write-Host "🔄 [$DisplayName] Fallback to JSON parsing..."
             $inspectJson = docker inspect $IMAGE_WITH_TAG | ConvertFrom-Json
             
             if ($LASTEXITCODE -ne 0) {
@@ -78,10 +78,10 @@ function Get-DockerImageDigest {
         
         # Validate digest format (should be sha256:...)
         if ($DIGEST -notmatch '^sha256:[a-f0-9]{64}$') {
-            Write-Output "⚠️ [$DisplayName] Warning: Digest format may be unexpected: $DIGEST"
+            Write-Host "⚠️ [$DisplayName] Warning: Digest format may be unexpected: $DIGEST"
         }
         
-        Write-Output "✅ [$DisplayName] Image digest resolved: $DIGEST"
+        Write-Host "✅ [$DisplayName] Image digest resolved: $DIGEST"
         return $DIGEST
     }
     catch {
@@ -93,8 +93,21 @@ function Get-DockerImageDigest {
 try {
     Write-Output "🚀 Starting batch Docker image digest resolution..."
     
+    # Log full input
+    Write-Output ""
+    Write-Output "📥 FULL INPUT:"
+    Write-Output "ImagesJson: $ImagesJson"
+    Write-Output "GitHubOutput: $GitHubOutput"
+    Write-Output ""
+    
     # Parse the JSON input
     $images = $ImagesJson | ConvertFrom-Json
+    
+    # Log parsed input structure
+    Write-Output "📋 PARSED INPUT STRUCTURE:"
+    $formattedInput = $images | ConvertTo-Json -Depth 10
+    Write-Output $formattedInput
+    Write-Output ""
     
     if ($images.Count -eq 0) {
         throw "No images provided in the input JSON"
@@ -111,38 +124,27 @@ try {
         Write-Output ""
         Write-Output "🔄 Processing: $imageKey"
         
-        try {
-            # Validate required properties
-            if (-not $image.repoOwner -or -not $image.repoName -or -not $image.imageName) {
-                throw "Missing required properties. Each image must have: repoOwner, repoName, imageName"
-            }
-            
-            $digest = Get-DockerImageDigest -RepoOwner $image.repoOwner -RepoName $image.repoName -ImageName $image.imageName -DisplayName $imageKey
-            
-            $results[$imageKey] = @{
-                digest = $digest
-                status = "success"
-                image = "ghcr.io/$($image.repoOwner)/$($image.repoName)/$($image.imageName):latest"
-            }
-            
-        } catch {
-            Write-Warning "Failed to process $imageKey`: $($_.Exception.Message)"
-            $results[$imageKey] = @{
-                digest = $null
-                status = "failed"
-                error = $_.Exception.Message
-                image = "ghcr.io/$($image.repoOwner)/$($image.repoName)/$($image.imageName):latest"
-            }
+        # Validate required properties
+        if (-not $image.repoOwner -or -not $image.repoName -or -not $image.imageName) {
+            Write-Error "❌ Missing required properties for image '$imageKey'. Each image must have: repoOwner, repoName, imageName"
+            exit 1
+        }
+        
+        # Get digest - any failure will cause immediate exit
+        $digest = Get-DockerImageDigest -RepoOwner $image.repoOwner -RepoName $image.repoName -ImageName $image.imageName -DisplayName $imageKey
+        
+        $results[$imageKey] = @{
+            digest = $digest
+            status = "success"
+            image = "ghcr.io/$($image.repoOwner)/$($image.repoName)/$($image.imageName):latest"
         }
     }
     
     # Output results
     Write-Output ""
     Write-Output "📊 Summary:"
-    $successCount = ($results.Values | Where-Object { $_.status -eq "success" }).Count
-    $failureCount = ($results.Values | Where-Object { $_.status -eq "failed" }).Count
-    Write-Output "✅ Successful: $successCount"
-    Write-Output "❌ Failed: $failureCount"
+    $successCount = $results.Count
+    Write-Output "✅ All $successCount image(s) processed successfully!"
     
     if ($GitHubOutput) {
         # Output JSON results
@@ -151,14 +153,14 @@ try {
         Write-Output "📝 JSON results written to GitHub output"
     }
     
+    # Log full output
     Write-Output ""
-    Write-Output "🎉 Batch digest resolution completed!"
+    Write-Output "📤 FULL OUTPUT:"
+    $formattedOutput = $results | ConvertTo-Json -Depth 10
+    Write-Output $formattedOutput
     
-    # Exit with error if any images failed
-    if ($failureCount -gt 0) {
-        Write-Warning "Some images failed to process. Check the logs above for details."
-        exit 1
-    }
+    Write-Output ""
+    Write-Output "🎉 Batch digest resolution completed successfully!"
     
 } catch {
     Write-Error "❌ Batch digest resolution failed: $($_.Exception.Message)"
