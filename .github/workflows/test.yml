@@ -10,23 +10,22 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    name: Test Inspect Docker Images Action
+    name: Test Resolve Latest Docker Digests Action
     
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       
-      - name: Test with multiple images
+      - name: Test resolving multiple images
         id: test-multi
         uses: ./
         with:
           images: |
             [
               {
-                "repo-owner": "library",
-                "repo-name": "hello-world",
-                "image-name": "hello-world",
-                "version": "latest"
+                "repoOwner": "library",
+                "repoName": "hello-world",
+                "imageName": "hello-world"
               }
             ]
         continue-on-error: true
@@ -36,10 +35,10 @@ jobs:
           echo "Test completed"
           if [[ "${{ steps.test-multi.outcome }}" == "success" ]]; then
             echo "✅ Action succeeded"
-            echo "JSON Output: ${{ steps.test-multi.outputs.digests-json }}"
+            echo "JSON Output: ${{ steps.test-multi.outputs.digests }}"
             
             # Extract digest using jq
-            RESULTS='${{ steps.test-multi.outputs.digests-json }}'
+            RESULTS='${{ steps.test-multi.outputs.digests }}'
             HELLO_DIGEST=$(echo "$RESULTS" | jq -r '."hello-world".digest // "not-found"')
             echo "Hello World Digest: $HELLO_DIGEST"
           else

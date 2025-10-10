@@ -1,79 +1,76 @@
-# Inspect Docker Images Action
+# Resolve Latest Docker Digests Action
 
-A GitHub Action that extracts Docker image digests from GitHub Container Registry for multiple images in batch.
+A GitHub Action that resolves the latest Docker image digests from GitHub Container Registry for multiple images in batch.
 
 ## Description
 
-This action processes multiple Docker images from GitHub Container Registry and extracts their exact digests. Perfect for microservices architectures where you need to get digests for frontend applications, multiple backend services, and other components all at once.
+This action processes multiple Docker images from GitHub Container Registry and resolves their exact digests. Perfect for microservices architectures where you need to get digests for frontend applications, multiple backend services, and other components all at once.
 
 ## Inputs
 
 | Input | Description | Required | Example |
 |-------|-------------|----------|---------|
-| `images` | JSON array of images to inspect. Each image should have: `repo-owner`, `repo-name`, `image-name`, `version` | Yes | See examples below |
+| `images` | JSON array of images to resolve. Each image should have: `repoOwner`, `repoName`, `imageName` (version is always "latest") | Yes | See examples below |
 
 ### Image Object Structure
 
 Each image in the JSON array should have:
-- `repo-owner`: GitHub repository owner (organization or user)
-- `repo-name`: GitHub repository name  
-- `image-name`: Docker image name
-- `version`: Docker image tag or version
+- `repoOwner`: GitHub repository owner (organization or user)
+- `repoName`: GitHub repository name  
+- `imageName`: Docker image name
+
+**Note**: The version is always set to "latest" automatically.
 
 ## Outputs
 
 | Output | Description |
 |--------|-------------|
-| `digests-json` | JSON object containing all image digests with status information |
+| `digests` | JSON object containing all resolved image digests with status information |
 
 ## Usage Examples
 
 ### Multiple Microservices from Different Repositories
 
 ```yaml
-name: Get All Service Digests
+name: Resolve All Service Digests
 on: [push]
 
 jobs:
-  get-digests:
+  resolve-digests:
     runs-on: ubuntu-latest
     steps:
-      - name: Get Docker Image Digests
+      - name: Resolve Docker Image Digests
         id: inspect
         uses: optivem/inspect-docker-action@v1
         with:
           images: |
             [
               {
-                "repo-owner": "myorg",
-                "repo-name": "frontend-repo",
-                "image-name": "frontend",
-                "version": "v1.0.0"
+                "repoOwner": "myorg",
+                "repoName": "frontend-repo",
+                "imageName": "frontend"
               },
               {
-                "repo-owner": "myorg", 
-                "repo-name": "user-service-repo",
-                "image-name": "user-service",
-                "version": "v2.1.0"
+                "repoOwner": "myorg", 
+                "repoName": "user-service-repo",
+                "imageName": "user-service"
               },
               {
-                "repo-owner": "myorg",
-                "repo-name": "order-service-repo", 
-                "image-name": "order-service",
-                "version": "v1.5.0"
+                "repoOwner": "myorg",
+                "repoName": "order-service-repo", 
+                "imageName": "order-service"
               },
               {
-                "repo-owner": "myorg",
-                "repo-name": "payment-service-repo",
-                "image-name": "payment-service", 
-                "version": "v3.0.0"
+                "repoOwner": "myorg",
+                "repoName": "payment-service-repo",
+                "imageName": "payment-service"
               }
             ]
       
       - name: Use the digests
         run: |
           # Extract individual digests from JSON
-          RESULTS='${{ steps.inspect.outputs.digests-json }}'
+          RESULTS='${{ steps.inspect.outputs.digests }}'
           FRONTEND_DIGEST=$(echo "$RESULTS" | jq -r '.frontend.digest')
           USER_SERVICE_DIGEST=$(echo "$RESULTS" | jq -r '."user-service".digest')
           ORDER_SERVICE_DIGEST=$(echo "$RESULTS" | jq -r '."order-service".digest')
@@ -87,43 +84,40 @@ jobs:
 ### Same Repository, Multiple Images
 
 ```yaml
-name: Get Multi-Container App Digests
+name: Resolve Multi-Container App Digests
 on: [push]
 
 jobs:
-  get-digests:
+  resolve-digests:
     runs-on: ubuntu-latest
     steps:
-      - name: Get Multiple Images from Same Repo
+      - name: Resolve Multiple Images from Same Repo
         id: inspect
         uses: optivem/inspect-docker-action@v1
         with:
           images: |
             [
               {
-                "repo-owner": "myorg",
-                "repo-name": "my-app",
-                "image-name": "frontend",
-                "version": "latest"
+                "repoOwner": "myorg",
+                "repoName": "my-app",
+                "imageName": "frontend"
               },
               {
-                "repo-owner": "myorg", 
-                "repo-name": "my-app",
-                "image-name": "backend",
-                "version": "latest"
+                "repoOwner": "myorg", 
+                "repoName": "my-app",
+                "imageName": "backend"
               },
               {
-                "repo-owner": "myorg",
-                "repo-name": "my-app", 
-                "image-name": "worker",
-                "version": "latest"
+                "repoOwner": "myorg",
+                "repoName": "my-app", 
+                "imageName": "worker"
               }
             ]
       
       - name: Deploy with exact digests
         run: |
           # Extract digests from JSON
-          RESULTS='${{ steps.inspect.outputs.digests-json }}'
+          RESULTS='${{ steps.inspect.outputs.digests }}'
           FRONTEND_DIGEST=$(echo "$RESULTS" | jq -r '.frontend.digest')
           BACKEND_DIGEST=$(echo "$RESULTS" | jq -r '.backend.digest')
           WORKER_DIGEST=$(echo "$RESULTS" | jq -r '.worker.digest')
@@ -143,39 +137,64 @@ jobs:
   scan:
     runs-on: ubuntu-latest
     steps:
-      - name: Get Service Digests
+      - name: Resolve Service Digests
         id: inspect
         uses: optivem/inspect-docker-action@v1
         with:
           images: |
             [
               {
-                "repo-owner": "myorg",
-                "repo-name": "services",
-                "image-name": "api",
-                "version": "v1.2.3"
+                "repoOwner": "myorg",
+                "repoName": "services",
+                "imageName": "api"
               },
               {
-                "repo-owner": "myorg",
-                "repo-name": "services", 
-                "image-name": "web",
-                "version": "v1.2.3"
+                "repoOwner": "myorg",
+                "repoName": "services", 
+                "imageName": "web"
               }
             ]
       
       - name: Scan API with exact digest
         run: |
-          RESULTS='${{ steps.inspect.outputs.digests-json }}'
+          RESULTS='${{ steps.inspect.outputs.digests }}'
           API_DIGEST=$(echo "$RESULTS" | jq -r '.api.digest')
           docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
             aquasec/trivy image ghcr.io/myorg/services/api@$API_DIGEST
       
       - name: Scan Web with exact digest  
         run: |
-          RESULTS='${{ steps.inspect.outputs.digests-json }}'
+          RESULTS='${{ steps.inspect.outputs.digests }}'
           WEB_DIGEST=$(echo "$RESULTS" | jq -r '.web.digest')
           docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
             aquasec/trivy image ghcr.io/myorg/services/web@$WEB_DIGEST
+```
+
+### Using GitHub Context Variables
+
+```yaml
+- name: Resolve Current Repository Images
+  id: inspect
+  uses: optivem/inspect-docker-action@v1
+  with:
+    images: |
+      [
+        {
+          "repoOwner": "${{ github.repository_owner }}",
+          "repoName": "${{ github.event.repository.name }}",
+          "imageName": "frontend"
+        },
+        {
+          "repoOwner": "${{ github.repository_owner }}",
+          "repoName": "${{ github.event.repository.name }}",
+          "imageName": "backend"
+        }
+      ]
+
+- name: Use resolved digests
+  run: |
+    RESULTS='${{ steps.inspect.outputs.digests }}'
+    echo "Results: $RESULTS"
 ```
 
 ### Using JSON Output for Dynamic Processing
@@ -184,7 +203,7 @@ jobs:
 - name: Process All Digests
   run: |
     # Parse the JSON output
-    RESULTS='${{ steps.inspect.outputs.digests-json }}'
+    RESULTS='${{ steps.inspect.outputs.digests }}'
     echo "All digests: $RESULTS"
     
     # Extract specific digests using jq
@@ -199,25 +218,25 @@ jobs:
 
 ## JSON Output Format
 
-The `digests-json` output contains a JSON object where each key is the image name and the value contains:
+The `digests` output contains a JSON object where each key is the image name and the value contains:
 
 ```json
 {
   "frontend": {
     "digest": "sha256:abc123...",
     "status": "success",
-    "image": "ghcr.io/myorg/app/frontend:v1.0.0"
+    "image": "ghcr.io/myorg/app/frontend:latest"
   },
   "backend": {
     "digest": "sha256:def456...",
     "status": "success", 
-    "image": "ghcr.io/myorg/app/backend:v1.0.0"
+    "image": "ghcr.io/myorg/app/backend:latest"
   },
   "worker": {
     "digest": null,
     "status": "failed",
-    "error": "Failed to pull Docker image: ghcr.io/myorg/app/worker:v1.0.0",
-    "image": "ghcr.io/myorg/app/worker:v1.0.0"
+    "error": "Failed to pull Docker image: ghcr.io/myorg/app/worker:latest",
+    "image": "ghcr.io/myorg/app/worker:latest"
   }
 }
 ```
@@ -243,7 +262,7 @@ jq -r 'to_entries[] | select(.value.status == "success") | .key' <<< "$RESULTS"
 1. **JSON Parsing**: Parses the input JSON array of images
 2. **Batch Processing**: Processes each image in sequence
 3. **Image Pull**: Uses `docker pull` to download each specified image
-4. **Digest Extraction**: Inspects each image to extract its SHA256 digest
+4. **Digest Resolution**: Inspects each image to resolve its SHA256 digest
 5. **JSON Output**: Creates a comprehensive JSON object with all results and status information
 6. **Error Handling**: Continues processing other images if one fails
 
@@ -271,10 +290,9 @@ If your Docker images are private, ensure your workflow is authenticated with Gi
     images: |
       [
         {
-          "repo-owner": "myorg",
-          "repo-name": "private-repo",
-          "image-name": "private-service",
-          "version": "v1.0.0"
+          "repoOwner": "myorg",
+          "repoName": "private-repo",
+          "imageName": "private-service"
         }
       ]
 ```

@@ -1,21 +1,21 @@
-name: 'Inspect Docker Images'
-description: 'Extracts Docker image digests from GitHub Container Registry for multiple images'
+name: 'Resolve Latest Docker Digests'
+description: 'Resolves the latest Docker image digests from GitHub Container Registry for multiple images'
 author: 'Optivem'
 branding:
   icon: 'search'
   color: 'blue'
 inputs:
   images:
-    description: 'JSON array of images to inspect. Each image should have: repo-owner, repo-name, image-name, version'
+    description: 'JSON array of images to resolve. Each image should have: repoOwner, repoName, imageName (version is always "latest")'
     required: true
 outputs:
-  digests-json:
-    description: 'JSON object containing all image digests'
-    value: ${{ steps.get-digests.outputs.digests-json }}
+  digests:
+    description: 'JSON object containing all resolved image digests'
+    value: ${{ steps.get-digests.outputs.digests }}
 runs:
   using: 'composite'
   steps:
-    - name: Get image digests
+    - name: Resolve image digests
       id: get-digests
       shell: pwsh
       run: |

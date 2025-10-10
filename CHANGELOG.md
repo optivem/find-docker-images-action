@@ -10,14 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0] - 2024-10-09
 
 ### Added
-- Initial release of the Inspect Docker Image action
-- Support for extracting Docker image digests from GitHub Container Registry
+- Initial release of the Resolve Latest Docker Digests action
+- Support for resolving Docker image digests from GitHub Container Registry
 - PowerShell-based implementation for cross-platform compatibility
 - Comprehensive error handling and logging
 - Support for public and private repositories (with proper authentication)
 
 ### Features
-- Extract exact SHA256 digest from Docker images
+- Resolve exact SHA256 digests from Docker images
 - Works with GitHub Container Registry (ghcr.io)
 - Composite action for easy integration
 - Detailed logging with emojis for better visibility
