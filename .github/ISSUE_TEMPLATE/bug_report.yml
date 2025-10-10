@@ -59,7 +59,7 @@ body:
       render: yaml
       placeholder: |
         - name: Inspect Docker Image
-          uses: optivem/inspect-docker-action@v1
+          uses: optivem/resolve-latest-docker-digests-action@v1
           with:
             repo-owner: 'example'
             repo-name: 'example'

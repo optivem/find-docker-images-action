@@ -29,8 +29,8 @@ Thank you for your interest in contributing to this project! Here's how you can 
 
 1. Clone your fork:
    ```bash
-   git clone https://github.com/YOUR-USERNAME/inspect-docker-action.git
-   cd inspect-docker-action
+   git clone https://github.com/YOUR-USERNAME/resolve-latest-docker-digests-action.git
+   cd resolve-latest-docker-digests-action
    ```
 
 2. Make sure you have PowerShell installed for testing the script locally

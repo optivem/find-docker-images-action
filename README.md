@@ -41,7 +41,7 @@ jobs:
     steps:
       - name: Resolve Docker Image Digests
         id: inspect
-        uses: optivem/inspect-docker-action@v1
+        uses: optivem/resolve-latest-docker-digests-action@v1
         with:
           images: |
             [
@@ -93,7 +93,7 @@ jobs:
     steps:
       - name: Resolve Multiple Images from Same Repo
         id: inspect
-        uses: optivem/inspect-docker-action@v1
+        uses: optivem/resolve-latest-docker-digests-action@v1
         with:
           images: |
             [
@@ -139,7 +139,7 @@ jobs:
     steps:
       - name: Resolve Service Digests
         id: inspect
-        uses: optivem/inspect-docker-action@v1
+        uses: optivem/resolve-latest-docker-digests-action@v1
         with:
           images: |
             [
@@ -175,7 +175,7 @@ jobs:
 ```yaml
 - name: Resolve Current Repository Images
   id: inspect
-  uses: optivem/inspect-docker-action@v1
+  uses: optivem/resolve-latest-docker-digests-action@v1
   with:
     images: |
       [
@@ -285,7 +285,7 @@ If your Docker images are private, ensure your workflow is authenticated with Gi
     password: ${{ secrets.GITHUB_TOKEN }}
 
 - name: Inspect Private Images
-  uses: optivem/inspect-docker-action@v1
+  uses: optivem/resolve-latest-docker-digests-action@v1
   with:
     images: |
       [

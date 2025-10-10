@@ -23,5 +23,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Detailed logging with emojis for better visibility
 - Robust error handling with meaningful error messages
 
-[Unreleased]: https://github.com/optivem/inspect-docker-action/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/optivem/inspect-docker-action/releases/tag/v1.0.0
+[Unreleased]: https://github.com/optivem/resolve-latest-docker-digests-action/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/optivem/resolve-latest-docker-digests-action/releases/tag/v1.0.0
