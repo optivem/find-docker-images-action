@@ -47,7 +47,15 @@ jobs:
       
       - name: Validate PowerShell syntax
         run: |
-          pwsh -Command "Get-Content './action.ps1' | ForEach-Object { if ($_ -match '^\s*#.*$|^\s*$') { return } ; try { [System.Management.Automation.PSParser]::Tokenize($_, [ref]$null) | Out-Null } catch { Write-Error 'PowerShell syntax error'; exit 1 } }"
+          pwsh -Command "
+          try {
+            \$null = [System.Management.Automation.PSParser]::Tokenize((Get-Content './action.ps1' -Raw), [ref]\$null)
+            Write-Output '✅ PowerShell syntax is valid'
+          } catch {
+            Write-Error 'PowerShell syntax error in action.ps1'
+            Write-Error \$_.Exception.Message
+            exit 1
+          }"
       
       - name: Test action.yml validity
         run: |
