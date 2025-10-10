@@ -113,7 +113,7 @@ try {
     Write-Output ""
     
     if ($images.Count -eq 0) {
-        throw "No images provided in the input JSON"
+        throw "No valid image URLs provided. Please provide at least one image URL."
     }
     
     Write-Output "📋 Processing $($images.Count) image(s)..."
