@@ -9,7 +9,7 @@ inputs:
     description: 'JSON array of image URLs to resolve digests for (e.g., ["nginx:latest", "ghcr.io/owner/repo/image:latest"])'
     required: true
 outputs:
-  digests:
+  image-digests:
     description: 'JSON object mapping image URLs to their resolved SHA256 digests'
     value: ${{ steps.get-digests.outputs.digests }}
 runs:

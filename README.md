@@ -29,7 +29,7 @@ Works with any Docker-compatible registry:
 
 | Output | Description |
 |--------|-------------|
-| `digests` | JSON object mapping image URLs to their resolved digests |
+| `image-digests` | JSON object mapping image URLs to their resolved digests |
 
 ### Output Structure
 
@@ -65,8 +65,8 @@ jobs:
       
       - name: Use Resolved Digests
         run: |
-          echo "Nginx digest: ${{ fromJson(steps.resolve.outputs.digests)['nginx:latest'] }}"
-          echo "Frontend digest: ${{ fromJson(steps.resolve.outputs.digests)['ghcr.io/myorg/frontend:latest'] }}"
+          echo "Nginx digest: ${{ fromJson(steps.resolve.outputs.image-digests)['nginx:latest'] }}"
+          echo "Frontend digest: ${{ fromJson(steps.resolve.outputs.image-digests)['ghcr.io/myorg/frontend:latest'] }}"
 ```
 
 ### Docker Hub Images

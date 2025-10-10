@@ -32,10 +32,10 @@ jobs:
           echo "Test completed"
           if [[ "${{ steps.test-multi.outcome }}" == "success" ]]; then
             echo "✅ Action succeeded"
-            echo "JSON Output: ${{ steps.test-multi.outputs.digests }}"
+            echo "JSON Output: ${{ steps.test-multi.outputs.image-digests }}"
             
             # Extract digests using jq (new simplified format)
-            RESULTS='${{ steps.test-multi.outputs.digests }}'
+            RESULTS='${{ steps.test-multi.outputs.image-digests }}'
             NGINX_DIGEST=$(echo "$RESULTS" | jq -r '."nginx:latest" // "not-found"')
             HELLO_DIGEST=$(echo "$RESULTS" | jq -r '."hello-world:latest" // "not-found"')
             echo "Nginx Digest: $NGINX_DIGEST"
