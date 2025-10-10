@@ -32,12 +32,12 @@ jobs:
             echo "✅ Action succeeded"
             echo "JSON Output: ${{ steps.test-multi.outputs.image-digest-urls }}"
             
-            # Extract digest URLs using jq
+            # Extract digest URLs using jq (array format)
             RESULTS='${{ steps.test-multi.outputs.image-digest-urls }}'
-            NGINX_DIGEST_URL=$(echo "$RESULTS" | jq -r '."nginx:latest" // "not-found"')
-            HELLO_DIGEST_URL=$(echo "$RESULTS" | jq -r '."hello-world:latest" // "not-found"')
-            echo "Nginx Digest URL: $NGINX_DIGEST_URL"
-            echo "Hello World Digest URL: $HELLO_DIGEST_URL"
+            FIRST_DIGEST_URL=$(echo "$RESULTS" | jq -r '.[0] // "not-found"')
+            SECOND_DIGEST_URL=$(echo "$RESULTS" | jq -r '.[1] // "not-found"')
+            echo "First image digest URL: $FIRST_DIGEST_URL"
+            echo "Second image digest URL: $SECOND_DIGEST_URL"
           else
             echo "❌ Action failed"
             echo "This might indicate an issue with the action"

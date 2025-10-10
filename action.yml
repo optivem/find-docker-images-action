@@ -10,7 +10,7 @@ inputs:
     required: true
 outputs:
   image-digest-urls:
-    description: 'JSON object mapping original image URLs to their complete digest URLs'
+    description: 'JSON array of digest URLs in the same order as input'
     value: ${{ steps.get-digests.outputs.digests }}
 runs:
   using: 'composite'

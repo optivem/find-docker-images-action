@@ -118,8 +118,8 @@ try {
     
     Write-Output "📋 Processing $($images.Count) image(s)..."
     
-    # Initialize results
-    $results = @{}
+    # Initialize results as array to preserve order
+    $results = @()
     
     # Process each image URL
     foreach ($imageUrl in $images) {
@@ -148,7 +148,7 @@ try {
             $digestUrl = $imageUrl + "@" + $digest
         }
         
-        $results[$imageUrl] = $digestUrl
+        $results += $digestUrl
     }
     
     # Output results

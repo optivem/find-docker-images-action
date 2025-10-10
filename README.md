@@ -12,7 +12,22 @@ This action processes multiple Docker images from any container registry (Docker
 
 | Input | Description | Required | Example |
 |-------|-------------|----------|---------|
-| `image-urls` | Newline-separated list of image URLs to resolve digests for | Yes | See examples below |
+| `image-urls` | Image URLs to resolve digests for. Supports both newline-separated list or JSON array format | Yes | See examples below |
+
+### Input Formats
+
+**Newline-separated (recommended):**
+```yaml
+image-urls: |
+  nginx:latest
+  ghcr.io/myorg/app:latest
+  mcr.microsoft.com/dotnet/aspnet:8.0
+```
+
+**JSON array:**
+```yaml
+image-urls: '["nginx:latest", "ghcr.io/myorg/app:latest", "mcr.microsoft.com/dotnet/aspnet:8.0"]'
+```
 
 ### Supported Registries
 
@@ -29,15 +44,15 @@ Works with any Docker-compatible registry:
 
 | Output | Description |
 |--------|-------------|
-| `image-digest-urls` | JSON object mapping original image URLs to their complete digest URLs |
+| `image-digest-urls` | JSON array of digest URLs in the same order as input |
 
 ### Output Structure
 
 ```json
-{
-  "nginx:latest": "nginx@sha256:abc123...",
-  "ghcr.io/owner/repo/app:latest": "ghcr.io/owner/repo/app@sha256:def456..."
-}
+[
+  "nginx@sha256:abc123...",
+  "ghcr.io/owner/repo/app@sha256:def456..."
+]
 ```
 
 ## Usage Examples
@@ -63,8 +78,22 @@ jobs:
       
       - name: Use Resolved Digest URLs
         run: |
-          echo "Nginx digest URL: ${{ fromJson(steps.resolve.outputs.image-digest-urls)['nginx:latest'] }}"
-          echo "Frontend digest URL: ${{ fromJson(steps.resolve.outputs.image-digest-urls)['ghcr.io/myorg/frontend:latest'] }}"
+          DIGESTS='${{ steps.resolve.outputs.image-digest-urls }}'
+          
+          # Access specific images by index (maintains input order)
+          NGINX_DIGEST=$(echo "$DIGESTS" | jq -r '.[0]')
+          FRONTEND_DIGEST=$(echo "$DIGESTS" | jq -r '.[1]')
+          ASPNET_DIGEST=$(echo "$DIGESTS" | jq -r '.[2]')
+          
+          echo "Nginx digest URL: $NGINX_DIGEST"
+          echo "Frontend digest URL: $FRONTEND_DIGEST"
+          echo "ASP.NET digest URL: $ASPNET_DIGEST"
+          
+          # Or iterate over all digest URLs
+          echo "All digest URLs:"
+          echo "$DIGESTS" | jq -r '.[]' | while read -r digest_url; do
+            echo "  - $digest_url"
+          done
 ```
 
 ### Docker Hub Images
@@ -113,6 +142,15 @@ jobs:
       ghcr.io/myorg/app:latest
       mcr.microsoft.com/dotnet/aspnet:8.0
       myregistry.azurecr.io/myapp:latest
+```
+
+### Using JSON Array Format
+
+```yaml
+- name: Resolve Images with JSON Array
+  uses: optivem/resolve-latest-docker-digests-action@v1
+  with:
+    image-urls: '["nginx:latest", "ghcr.io/myorg/app:latest", "redis:alpine"]'
 ```
 
 ## Working with Private Registries

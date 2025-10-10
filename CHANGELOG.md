@@ -11,10 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **BREAKING**: Repository renamed from `optivem/inspect-docker-action` to `optivem/resolve-latest-docker-digests-action`
 - **BREAKING**: Input parameter renamed from `images` to `image-urls` for clarity
 - **BREAKING**: Output parameter renamed from `image-digests` to `image-digest-urls` for clarity
-- **BREAKING**: Input format changed from JSON array to newline-separated list for better user experience
-- **BREAKING**: Output format changed from digest values to complete digest URLs (e.g., `nginx@sha256:abc123...`)
+- **BREAKING**: Output format changed from dictionary to JSON array for simpler usage
 - **BREAKING**: Simplified input format - now accepts array of image URLs instead of objects with repoOwner/repoName/imageName
 - **BREAKING**: Action now supports any Docker registry, not just GitHub Container Registry
+- Input format enhanced to support both newline-separated list and JSON array for maximum flexibility
 - Users should update their workflow files to use the new repository name: `optivem/resolve-latest-docker-digests-action@v1`
 - Enhanced flexibility - works with Docker Hub, GHCR, ACR, ECR, GCR, and private registries
 - Improved logging and error handling
@@ -32,7 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ]
 ```
 
-**New format (v2.0.0):**
+**New format (v2.0.0) - Option 1 (Newline-separated, recommended):**
 ```yaml
 image-urls: |
   ghcr.io/myorg/my-repo/my-app:latest
@@ -40,17 +40,22 @@ image-urls: |
   mcr.microsoft.com/dotnet/aspnet:8.0
 ```
 
+**New format (v2.0.0) - Option 2 (JSON array):**
+```yaml
+image-urls: '["ghcr.io/myorg/my-repo/my-app:latest", "nginx:latest", "mcr.microsoft.com/dotnet/aspnet:8.0"]'
+```
+
 **Output change:**
 ```json
-// Old output (just digests)
+// Old output (dictionary with digests)
 {
   "nginx:latest": "sha256:abc123..."
 }
 
-// New output (complete digest URLs)
-{
-  "nginx:latest": "nginx@sha256:abc123..."
-}
+// New output (array with digest URLs)
+[
+  "nginx@sha256:abc123..."
+]
 ```
 
 ## [1.0.0] - 2024-10-09
