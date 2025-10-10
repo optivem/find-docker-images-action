@@ -27,35 +27,22 @@ function Get-DockerImageDigest {
         # Get the image digest using docker inspect
         Write-Host "Resolving digest..."
         
-        # First try to get digest directly from docker inspect
-        $inspectResult = docker inspect $ImageUrl --format='{{index .RepoDigests 0}}' 2>$null
+        # Always get full inspect data
+        $inspectJson = docker inspect $ImageUrl | ConvertFrom-Json
         
-        if ($LASTEXITCODE -eq 0 -and ![string]::IsNullOrEmpty($inspectResult)) {
-            # Extract just the digest part (after @)
-            if ($inspectResult -match '@(.+)$') {
-                $DIGEST = $matches[1]
-            } else {
-                throw "Could not parse digest from: $inspectResult"
-            }
+        if ($LASTEXITCODE -ne 0) {
+            throw "Failed to inspect Docker image: $ImageUrl"
+        }
+        
+        if ($inspectJson.Count -eq 0 -or -not $inspectJson[0].RepoDigests -or $inspectJson[0].RepoDigests.Count -eq 0) {
+            throw "No digest found for image: $ImageUrl. The image may not be from a registry that supports digests."
+        }
+        
+        $repoDigest = $inspectJson[0].RepoDigests[0]
+        if ($repoDigest -match '@(.+)$') {
+            $DIGEST = $matches[1]
         } else {
-            # Fallback to JSON parsing
-            Write-Host "Fallback to JSON parsing..."
-            $inspectJson = docker inspect $ImageUrl | ConvertFrom-Json
-            
-            if ($LASTEXITCODE -ne 0) {
-                throw "Failed to inspect Docker image: $ImageUrl"
-            }
-            
-            if ($inspectJson.Count -eq 0 -or -not $inspectJson[0].RepoDigests -or $inspectJson[0].RepoDigests.Count -eq 0) {
-                throw "No digest found for image: $ImageUrl. The image may not be from a registry that supports digests."
-            }
-            
-            $repoDigest = $inspectJson[0].RepoDigests[0]
-            if ($repoDigest -match '@(.+)$') {
-                $DIGEST = $matches[1]
-            } else {
-                throw "Could not parse digest from: $repoDigest"
-            }
+            throw "Could not parse digest from: $repoDigest"
         }
         
         if ([string]::IsNullOrEmpty($DIGEST)) {
@@ -68,7 +55,12 @@ function Get-DockerImageDigest {
         }
         
         Write-Host "Image digest resolved: $DIGEST"
-        return $DIGEST
+        
+        # Return both digest and full inspect data
+        return @{
+            Digest = $DIGEST
+            InspectData = $inspectJson[0]
+        }
     }
     catch {
         Write-Error "Error processing $ImageUrl`: $($_.Exception.Message)"
@@ -129,8 +121,9 @@ try {
 
     Write-Host "Processing $($images.Count) image(s)..."
     
-    # Initialize results as array to preserve order
+    # Initialize results as arrays to preserve order
     $results = @()
+    $inspectResults = @()
     
     # Process each image URL
     foreach ($imageUrl in $images) {
@@ -143,8 +136,10 @@ try {
             exit 1
         }
         
-        # Get digest - any failure will cause immediate exit
-        $digest = Get-DockerImageDigest -ImageUrl $imageUrl
+        # Get digest and inspect data - any failure will cause immediate exit
+        $imageData = Get-DockerImageDigest -ImageUrl $imageUrl
+        $digest = $imageData.Digest
+        $inspectData = $imageData.InspectData
         
         # Create the digest URL by replacing tag with digest
         $digestUrl = ""
@@ -160,6 +155,7 @@ try {
         }
         
         $results += $digestUrl
+        $inspectResults += $inspectData
     }
     
     # Output results
@@ -176,18 +172,37 @@ try {
             $jsonOutput = $results | ConvertTo-Json -Compress
         }
         "digests=$jsonOutput" | Out-File -FilePath $GitHubOutput -Append -Encoding utf8
-        Write-Host "JSON results written to GitHub output"
+        
+        # Output inspect data - always as array format
+        if ($inspectResults.Count -eq 1) {
+            $inspectJsonOutput = "[$($inspectResults[0] | ConvertTo-Json -Compress -Depth 10)]"
+        } else {
+            $inspectJsonOutput = $inspectResults | ConvertTo-Json -Compress -Depth 10
+        }
+        "inspect-data=$inspectJsonOutput" | Out-File -FilePath $GitHubOutput -Append -Encoding utf8
+        
+        Write-Host "JSON results and inspect data written to GitHub output"
     }
     
     # Log full output
     Write-Host ""
     Write-Host "FULL OUTPUT:"
+    Write-Host "Digest URLs:"
     if ($results.Count -eq 1) {
         $formattedOutput = "[$($results[0] | ConvertTo-Json -Depth 10)]"
     } else {
         $formattedOutput = $results | ConvertTo-Json -Depth 10
     }
     Write-Output $formattedOutput
+    
+    Write-Host ""
+    Write-Host "Inspect Data:"
+    if ($inspectResults.Count -eq 1) {
+        $formattedInspectOutput = "[$($inspectResults[0] | ConvertTo-Json -Depth 10)]"
+    } else {
+        $formattedInspectOutput = $inspectResults | ConvertTo-Json -Depth 10
+    }
+    Write-Output $formattedInspectOutput
     
     Write-Host ""
     Write-Host "Batch digest resolution completed successfully!"
