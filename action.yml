@@ -6,7 +6,7 @@ branding:
   color: 'blue'
 inputs:
   image-urls:
-    description: 'Newline-separated list of image URLs to resolve digests for'
+    description: 'Image URLs to resolve digests for. Supports both newline-separated list or JSON array format'
     required: true
 outputs:
   image-digest-urls:

@@ -87,8 +87,24 @@ try {
     Write-Output "GitHubOutput: $GitHubOutput"
     Write-Output ""
     
-    # Parse the newline-separated input
-    $images = $ImageUrls -split "`n" | Where-Object { $_.Trim() -ne "" } | ForEach-Object { $_.Trim() }
+    # Parse the input - support both JSON array and newline-separated formats
+    $images = @()
+    
+    # Try to parse as JSON first
+    try {
+        $trimmedInput = $ImageUrls.Trim()
+        if ($trimmedInput.StartsWith('[') -and $trimmedInput.EndsWith(']')) {
+            Write-Output "📋 Detected JSON array format"
+            $jsonArray = $trimmedInput | ConvertFrom-Json
+            $images = $jsonArray | Where-Object { ![string]::IsNullOrWhiteSpace($_) } | ForEach-Object { $_.Trim() }
+        } else {
+            throw "Not JSON format"
+        }
+    } catch {
+        # Fall back to newline-separated format
+        Write-Output "📋 Using newline-separated format"
+        $images = $ImageUrls -split "`n" | Where-Object { $_.Trim() -ne "" } | ForEach-Object { $_.Trim() }
+    }
     
     # Log parsed input structure
     Write-Output "📋 PARSED INPUT STRUCTURE:"
