@@ -82,40 +82,53 @@ try {
     
     # Log full input
     Write-Output ""
-    Write-Output "📥 FULL INPUT:"
     Write-Output "ImageUrls: $ImageUrls"
-    Write-Output "GitHubOutput: $GitHubOutput"
     Write-Output ""
-    
-    # Parse the input - support both JSON array and newline-separated formats
-    $images = @()
-    
+
+
+    Write-Host "Image URLs:"
+
+    # Parse image URLs - support both newline-separated and JSON array formats
+    $imageUrlList = @()
+
     # Try to parse as JSON first
-    try {
-        $trimmedInput = $ImageUrls.Trim()
-        if ($trimmedInput.StartsWith('[') -and $trimmedInput.EndsWith(']')) {
-            Write-Output "📋 Detected JSON array format"
+    $trimmedInput = $ImageUrls.Trim()
+    Write-Host "🔍 Trimmed input: '$trimmedInput'"
+    
+    if ($trimmedInput.StartsWith('[') -and $trimmedInput.EndsWith(']')) {
+        try {
+            Write-Host "📋 Detected JSON array format"
             $jsonArray = $trimmedInput | ConvertFrom-Json
-            $images = $jsonArray | Where-Object { ![string]::IsNullOrWhiteSpace($_) } | ForEach-Object { $_.Trim() }
-        } else {
-            throw "Not JSON format"
+            if ($jsonArray -is [Array]) {
+                $imageUrlList = $jsonArray | Where-Object { ![string]::IsNullOrWhiteSpace($_) } | ForEach-Object { $_.Trim() }
+            } else {
+                # Single item in JSON array
+                $imageUrlList = @($jsonArray.Trim())
+            }
+        } catch {
+            Write-Error "❌ Invalid JSON format in image-urls input: $($_.Exception.Message)"
+            exit 1
         }
-    } catch {
-        # Fall back to newline-separated format
-        Write-Output "📋 Using newline-separated format"
-        $images = $ImageUrls -split "`n" | Where-Object { $_.Trim() -ne "" } | ForEach-Object { $_.Trim() }
+    } else {
+        # Parse as newline-separated format
+        Write-Host "📋 Detected newline-separated format"
+        $imageUrlList = $ImageUrls -split "`r?`n" | Where-Object { 
+            ![string]::IsNullOrWhiteSpace($_) -and $_.Trim() -notmatch "^#" 
+        } | ForEach-Object { $_.Trim() }
     }
-    
-    # Log parsed input structure
-    Write-Output "📋 PARSED INPUT STRUCTURE:"
-    $formattedInput = $images | ConvertTo-Json -Depth 10
-    Write-Output $formattedInput
-    Write-Output ""
-    
-    if ($images.Count -eq 0) {
-        throw "No valid image URLs provided. Please provide at least one image URL."
+
+    if ($imageUrlList.Count -eq 0) {
+        Write-Error "❌ No valid image URLs provided. Please provide at least one image URL."
+        exit 1
     }
-    
+
+    foreach ($url in $imageUrlList) {
+        Write-Host "  - $url"
+    }
+
+    # Assign the parsed image URLs to the variable expected by the rest of the script
+    $images = $imageUrlList
+
     Write-Output "📋 Processing $($images.Count) image(s)..."
     
     # Initialize results as array to preserve order
