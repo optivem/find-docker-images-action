@@ -1,4 +1,3 @@
-
 param(
     [Parameter(Mandatory=$true)]
     [string]$ImageUrls,
@@ -15,10 +14,10 @@ function Get-DockerImageDigest {
     )
     
     try {
-        Write-Host "🔍 Resolving image: $ImageUrl"
+        Write-Host "Resolving image: $ImageUrl"
 
         # Pull the image to get the exact digest
-        Write-Host "📥 Pulling image to get digest..."
+        Write-Host "Pulling image to get digest..."
         docker pull $ImageUrl | Out-Host
         
         if ($LASTEXITCODE -ne 0) {
@@ -26,7 +25,7 @@ function Get-DockerImageDigest {
         }
 
         # Get the image digest using docker inspect
-        Write-Host "🔎 Resolving digest..."
+        Write-Host "Resolving digest..."
         
         # First try to get digest directly from docker inspect
         $inspectResult = docker inspect $ImageUrl --format='{{index .RepoDigests 0}}' 2>$null
@@ -40,7 +39,7 @@ function Get-DockerImageDigest {
             }
         } else {
             # Fallback to JSON parsing
-            Write-Host "🔄 Fallback to JSON parsing..."
+            Write-Host "Fallback to JSON parsing..."
             $inspectJson = docker inspect $ImageUrl | ConvertFrom-Json
             
             if ($LASTEXITCODE -ne 0) {
@@ -65,26 +64,25 @@ function Get-DockerImageDigest {
         
         # Validate digest format (should be sha256:...)
         if ($DIGEST -notmatch '^sha256:[a-f0-9]{64}$') {
-            Write-Host "⚠️ Warning: Digest format may be unexpected: $DIGEST"
+            Write-Host "Warning: Digest format may be unexpected: $DIGEST"
         }
         
-        Write-Host "✅ Image digest resolved: $DIGEST"
+        Write-Host "Image digest resolved: $DIGEST"
         return $DIGEST
     }
     catch {
-        Write-Error "❌ Error processing $ImageUrl`: $($_.Exception.Message)"
+        Write-Error "Error processing $ImageUrl`: $($_.Exception.Message)"
         throw
     }
 }
 
 try {
-    Write-Output "🚀 Starting batch Docker image digest resolution..."
+    Write-Host "Starting batch Docker image digest resolution..."
     
     # Log full input
-    Write-Output ""
-    Write-Output "ImageUrls: $ImageUrls"
-    Write-Output ""
-
+    Write-Host ""
+    Write-Host "ImageUrls: $ImageUrls"
+    Write-Host ""
 
     Write-Host "Image URLs:"
 
@@ -93,11 +91,11 @@ try {
 
     # Try to parse as JSON first
     $trimmedInput = $ImageUrls.Trim()
-    Write-Host "🔍 Trimmed input: '$trimmedInput'"
+    Write-Host "Trimmed input: '$trimmedInput'"
     
     if ($trimmedInput.StartsWith('[') -and $trimmedInput.EndsWith(']')) {
         try {
-            Write-Host "📋 Detected JSON array format"
+            Write-Host "Detected JSON array format"
             $jsonArray = $trimmedInput | ConvertFrom-Json
             if ($jsonArray -is [Array]) {
                 $imageUrlList = $jsonArray | Where-Object { ![string]::IsNullOrWhiteSpace($_) } | ForEach-Object { $_.Trim() }
@@ -106,19 +104,19 @@ try {
                 $imageUrlList = @($jsonArray.Trim())
             }
         } catch {
-            Write-Error "❌ Invalid JSON format in image-urls input: $($_.Exception.Message)"
+            Write-Error "Invalid JSON format in image-urls input: $($_.Exception.Message)"
             exit 1
         }
     } else {
         # Parse as newline-separated format
-        Write-Host "📋 Detected newline-separated format"
+        Write-Host "Detected newline-separated format"
         $imageUrlList = $ImageUrls -split "`r?`n" | Where-Object { 
             ![string]::IsNullOrWhiteSpace($_) -and $_.Trim() -notmatch "^#" 
         } | ForEach-Object { $_.Trim() }
     }
 
     if ($imageUrlList.Count -eq 0) {
-        Write-Error "❌ No valid image URLs provided. Please provide at least one image URL."
+        Write-Error "No valid image URLs provided. Please provide at least one image URL."
         exit 1
     }
 
@@ -129,19 +127,19 @@ try {
     # Assign the parsed image URLs to the variable expected by the rest of the script
     $images = $imageUrlList
 
-    Write-Output "📋 Processing $($images.Count) image(s)..."
+    Write-Host "Processing $($images.Count) image(s)..."
     
     # Initialize results as array to preserve order
     $results = @()
     
     # Process each image URL
     foreach ($imageUrl in $images) {
-        Write-Output ""
-        Write-Output "🔄 Processing: $imageUrl"
+        Write-Host ""
+        Write-Host "Processing: $imageUrl"
         
         # Validate that we have a non-empty string
         if ([string]::IsNullOrWhiteSpace($imageUrl)) {
-            Write-Error "❌ Empty or invalid image URL provided"
+            Write-Error "Empty or invalid image URL provided"
             exit 1
         }
         
@@ -165,28 +163,36 @@ try {
     }
     
     # Output results
-    Write-Output ""
-    Write-Output "📊 Summary:"
+    Write-Host ""
+    Write-Host "Summary:"
     $successCount = $results.Count
-    Write-Output "✅ All $successCount image(s) processed successfully!"
+    Write-Host "All $successCount image(s) processed successfully!"
     
     if ($GitHubOutput) {
         # Output JSON results - always as array format
-        $jsonOutput = $results | ConvertTo-Json -Compress -AsArray
+        if ($results.Count -eq 1) {
+            $jsonOutput = "[$($results[0] | ConvertTo-Json -Compress)]"
+        } else {
+            $jsonOutput = $results | ConvertTo-Json -Compress
+        }
         "digests=$jsonOutput" | Out-File -FilePath $GitHubOutput -Append -Encoding utf8
-        Write-Output "📝 JSON results written to GitHub output"
+        Write-Host "JSON results written to GitHub output"
     }
     
     # Log full output
-    Write-Output ""
-    Write-Output "📤 FULL OUTPUT:"
-    $formattedOutput = $results | ConvertTo-Json -Depth 10 -AsArray
+    Write-Host ""
+    Write-Host "FULL OUTPUT:"
+    if ($results.Count -eq 1) {
+        $formattedOutput = "[$($results[0] | ConvertTo-Json -Depth 10)]"
+    } else {
+        $formattedOutput = $results | ConvertTo-Json -Depth 10
+    }
     Write-Output $formattedOutput
     
-    Write-Output ""
-    Write-Output "🎉 Batch digest resolution completed successfully!"
+    Write-Host ""
+    Write-Host "Batch digest resolution completed successfully!"
     
 } catch {
-    Write-Error "❌ Batch digest resolution failed: $($_.Exception.Message)"
+    Write-Error "Batch digest resolution failed: $($_.Exception.Message)"
     exit 1
 }
