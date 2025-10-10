@@ -1,6 +1,6 @@
 # Resolve Latest Docker Digests Action
 
-> **⚠️ Repository Renamed**: This action was previously located at `optivem/inspect-docker-action`. Please update your workflows to use `optivem/resolve-latest-docker-digests-action@v1` instead.
+[![test](https://github.com/optivem/resolve-latest-docker-digests-action/actions/workflows/test.yml/badge.svg)](https://github.com/optivem/resolve-latest-docker-digests-action/actions/workflows/test.yml)
 
 A GitHub Action that resolves Docker image digests from any container registry for multiple images in batch.
 
