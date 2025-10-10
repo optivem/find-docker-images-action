@@ -12,7 +12,7 @@ This action processes multiple Docker images from any container registry (Docker
 
 | Input | Description | Required | Example |
 |-------|-------------|----------|---------|
-| `images` | JSON array of image URLs to resolve digests for | Yes | `["nginx:latest", "ghcr.io/owner/repo/image:latest"]` |
+| `image-urls` | JSON array of image URLs to resolve digests for | Yes | `["nginx:latest", "ghcr.io/owner/repo/image:latest"]` |
 
 ### Supported Registries
 
@@ -56,7 +56,7 @@ jobs:
         id: resolve
         uses: optivem/resolve-latest-docker-digests-action@v1
         with:
-          images: |
+          image-urls: |
             [
               "nginx:latest",
               "ghcr.io/myorg/frontend:latest",

@@ -61,7 +61,7 @@ body:
         - name: Resolve Docker Image Digests
           uses: optivem/resolve-latest-docker-digests-action@v1
           with:
-            images: |
+            image-urls: |
               [
                 "nginx:latest",
                 "ghcr.io/owner/repo/image:latest"

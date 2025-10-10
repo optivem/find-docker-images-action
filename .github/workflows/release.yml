@@ -32,7 +32,7 @@ jobs:
       - name: Validate action
         uses: ./
         with:
-          images: |
+          image-urls: |
             [
               "hello-world:latest"
             ]
