@@ -45,13 +45,34 @@ Works with any Docker-compatible registry:
 | Output | Description |
 |--------|-------------|
 | `image-digest-urls` | JSON array of digest URLs in the same order as input |
+| `image-inspect-data` | JSON array of full Docker inspect data for each image in the same order as input |
 
 ### Output Structure
 
+**image-digest-urls:**
 ```json
 [
   "nginx@sha256:abc123...",
   "ghcr.io/owner/repo/app@sha256:def456..."
+]
+```
+
+**image-inspect-data:**
+```json
+[
+  {
+    "Id": "sha256:abc123...",
+    "RepoTags": ["nginx:latest"],
+    "RepoDigests": ["nginx@sha256:abc123..."],
+    "Parent": "",
+    "Comment": "",
+    "Created": "2023-12-01T10:30:00Z",
+    "Config": { ... },
+    "Architecture": "amd64",
+    "Os": "linux",
+    "Size": 142123456,
+    "VirtualSize": 142123456
+  }
 ]
 ```
 
@@ -76,9 +97,10 @@ jobs:
             ghcr.io/myorg/frontend:latest
             mcr.microsoft.com/dotnet/aspnet:8.0
       
-      - name: Use Resolved Digest URLs
+      - name: Use Resolved Digest URLs and Inspect Data
         run: |
           DIGESTS='${{ steps.resolve.outputs.image-digest-urls }}'
+          INSPECT_DATA='${{ steps.resolve.outputs.image-inspect-data }}'
           
           # Access specific images by index (maintains input order)
           NGINX_DIGEST=$(echo "$DIGESTS" | jq -r '.[0]')
@@ -88,6 +110,15 @@ jobs:
           echo "Nginx digest URL: $NGINX_DIGEST"
           echo "Frontend digest URL: $FRONTEND_DIGEST"
           echo "ASP.NET digest URL: $ASPNET_DIGEST"
+          
+          # Access inspect data for detailed image information
+          NGINX_SIZE=$(echo "$INSPECT_DATA" | jq -r '.[0].Size')
+          NGINX_ARCH=$(echo "$INSPECT_DATA" | jq -r '.[0].Architecture')
+          NGINX_OS=$(echo "$INSPECT_DATA" | jq -r '.[0].Os')
+          
+          echo "Nginx image size: $NGINX_SIZE bytes"
+          echo "Nginx architecture: $NGINX_ARCH"
+          echo "Nginx OS: $NGINX_OS"
           
           # Or iterate over all digest URLs
           echo "All digest URLs:"
