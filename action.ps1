@@ -158,8 +158,8 @@ try {
     Write-Output "✅ All $successCount image(s) processed successfully!"
     
     if ($GitHubOutput) {
-        # Output JSON results
-        $jsonOutput = $results | ConvertTo-Json -Compress
+        # Output JSON results - always as array format
+        $jsonOutput = $results | ConvertTo-Json -Compress -AsArray
         "digests=$jsonOutput" | Out-File -FilePath $GitHubOutput -Append -Encoding utf8
         Write-Output "📝 JSON results written to GitHub output"
     }
@@ -167,7 +167,7 @@ try {
     # Log full output
     Write-Output ""
     Write-Output "📤 FULL OUTPUT:"
-    $formattedOutput = $results | ConvertTo-Json -Depth 10
+    $formattedOutput = $results | ConvertTo-Json -Depth 10 -AsArray
     Write-Output $formattedOutput
     
     Write-Output ""
