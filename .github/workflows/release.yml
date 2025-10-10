@@ -32,8 +32,8 @@ jobs:
       - name: Validate action
         uses: ./
         with:
-          repo-owner: 'hello-world'
-          repo-name: 'hello-world' 
-          image-name: 'hello-world'
-          version: 'latest'
+          images: |
+            [
+              "hello-world:latest"
+            ]
         continue-on-error: true
