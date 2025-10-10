@@ -1,5 +1,5 @@
-name: 'Resolve Latest Docker Digests'
-description: 'Resolves Docker image digests from any container registry for multiple images'
+name: 'Inspect Docker Images'
+description: 'Inspects Docker images and resolves their digests from any container registry'
 author: 'Optivem'
 branding:
   icon: 'search'

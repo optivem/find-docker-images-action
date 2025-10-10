@@ -10,7 +10,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    name: Test Resolve Latest Docker Digests Action
+    name: Test Inspect Docker Images Action
     
     steps:
       - name: Checkout
