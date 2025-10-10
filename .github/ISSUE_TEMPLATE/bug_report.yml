@@ -62,10 +62,8 @@ body:
           uses: optivem/resolve-latest-docker-digests-action@v1
           with:
             image-urls: |
-              [
-                "nginx:latest",
-                "ghcr.io/owner/repo/image:latest"
-              ]
+              nginx:latest
+              ghcr.io/owner/repo/image:latest
 
   - type: textarea
     id: logs

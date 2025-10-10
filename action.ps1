@@ -1,7 +1,7 @@
 
 param(
     [Parameter(Mandatory=$true)]
-    [string]$ImagesJson,
+    [string]$ImageUrls,
     [Parameter(Mandatory=$false)]
     [string]$GitHubOutput = $env:GITHUB_OUTPUT
 )
@@ -83,12 +83,12 @@ try {
     # Log full input
     Write-Output ""
     Write-Output "📥 FULL INPUT:"
-    Write-Output "ImagesJson: $ImagesJson"
+    Write-Output "ImageUrls: $ImageUrls"
     Write-Output "GitHubOutput: $GitHubOutput"
     Write-Output ""
     
-    # Parse the JSON input - now expecting array of strings
-    $images = $ImagesJson | ConvertFrom-Json
+    # Parse the newline-separated input
+    $images = $ImageUrls -split "`n" | Where-Object { $_.Trim() -ne "" } | ForEach-Object { $_.Trim() }
     
     # Log parsed input structure
     Write-Output "📋 PARSED INPUT STRUCTURE:"

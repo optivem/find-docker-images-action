@@ -33,7 +33,5 @@ jobs:
         uses: ./
         with:
           image-urls: |
-            [
-              "hello-world:latest"
-            ]
+            hello-world:latest
         continue-on-error: true

@@ -1,12 +1,10 @@
-# Test script for the refactored action using image URLs
-# This demonstrates the new flexible approach
+# Test script for the refactored action using newline-separated image URLs
+# This demonstrates the new user-friendly approach
 
-# Test with various registries and image URLs
-$imagesJson = @'
-[
-  "ghcr.io/optivem/atdd-accelerator-template-dotnet/monolith:latest",
-  "nginx:latest"
-]
+# Test with various registries using newline-separated format
+$imageUrls = @'
+ghcr.io/optivem/atdd-accelerator-template-dotnet/monolith:latest
+nginx:latest
 '@
 
 # Create a temporary output file to simulate GITHUB_OUTPUT
@@ -15,14 +13,14 @@ Write-Output "Using temporary output file: $tempOutputFile"
 
 # Run the action script
 try {
-    Write-Output "🧪 Testing the refactored action with image URLs..."
+    Write-Output "🧪 Testing the refactored action with newline-separated image URLs..."
     Write-Output "Images to test:"
     Write-Output "  1. ghcr.io/optivem/atdd-accelerator-template-dotnet/monolith:latest"
     Write-Output "  2. nginx:latest"
     Write-Output ""
     
-    # Call the action script with image URLs
-    & ".\action.ps1" -ImagesJson $imagesJson -GitHubOutput $tempOutputFile
+    # Call the action script with newline-separated image URLs
+    & ".\action.ps1" -ImageUrls $imageUrls -GitHubOutput $tempOutputFile
     
     Write-Output ""
     Write-Output "📄 Contents of simulated GitHub output file:"

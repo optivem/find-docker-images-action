@@ -6,7 +6,7 @@ branding:
   color: 'blue'
 inputs:
   image-urls:
-    description: 'JSON array of image URLs to resolve digests for (e.g., ["nginx:latest", "ghcr.io/owner/repo/image:latest"])'
+    description: 'Newline-separated list of image URLs to resolve digests for'
     required: true
 outputs:
   image-digests:
@@ -19,4 +19,4 @@ runs:
       id: get-digests
       shell: pwsh
       run: |
-        & "${{ github.action_path }}/action.ps1" -ImagesJson '${{ inputs.image-urls }}'
+        & "${{ github.action_path }}/action.ps1" -ImageUrls '${{ inputs.image-urls }}'

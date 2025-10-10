@@ -12,7 +12,7 @@ This action processes multiple Docker images from any container registry (Docker
 
 | Input | Description | Required | Example |
 |-------|-------------|----------|---------|
-| `image-urls` | JSON array of image URLs to resolve digests for | Yes | `["nginx:latest", "ghcr.io/owner/repo/image:latest"]` |
+| `image-urls` | Newline-separated list of image URLs to resolve digests for | Yes | See examples below |
 
 ### Supported Registries
 
@@ -57,11 +57,9 @@ jobs:
         uses: optivem/resolve-latest-docker-digests-action@v1
         with:
           image-urls: |
-            [
-              "nginx:latest",
-              "ghcr.io/myorg/frontend:latest",
-              "mcr.microsoft.com/dotnet/aspnet:8.0"
-            ]
+            nginx:latest
+            ghcr.io/myorg/frontend:latest
+            mcr.microsoft.com/dotnet/aspnet:8.0
       
       - name: Use Resolved Digests
         run: |
@@ -75,12 +73,10 @@ jobs:
 - name: Resolve Docker Hub Images
   uses: optivem/resolve-latest-docker-digests-action@v1
   with:
-    images: |
-      [
-        "nginx:latest",
-        "redis:alpine",
-        "postgres:15"
-      ]
+    image-urls: |
+      nginx:latest
+      redis:alpine
+      postgres:15
 ```
 
 ### GitHub Container Registry
@@ -89,12 +85,10 @@ jobs:
 - name: Resolve GitHub Container Registry Images
   uses: optivem/resolve-latest-docker-digests-action@v1
   with:
-    images: |
-      [
-        "ghcr.io/myorg/frontend:latest",
-        "ghcr.io/myorg/backend:latest",
-        "ghcr.io/myorg/worker:latest"
-      ]
+    image-urls: |
+      ghcr.io/myorg/frontend:latest
+      ghcr.io/myorg/backend:latest
+      ghcr.io/myorg/worker:latest
 ```
 
 ### Current Repository Images
@@ -103,11 +97,9 @@ jobs:
 - name: Resolve Current Repository Images
   uses: optivem/resolve-latest-docker-digests-action@v1
   with:
-    images: |
-      [
-        "ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}/app:latest",
-        "ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}/worker:latest"
-      ]
+    image-urls: |
+      ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}/app:latest
+      ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}/worker:latest
 ```
 
 ### Multiple Registries
@@ -116,13 +108,11 @@ jobs:
 - name: Resolve Images from Multiple Registries
   uses: optivem/resolve-latest-docker-digests-action@v1
   with:
-    images: |
-      [
-        "nginx:latest",
-        "ghcr.io/myorg/app:latest",
-        "mcr.microsoft.com/dotnet/aspnet:8.0",
-        "myregistry.azurecr.io/myapp:latest"
-      ]
+    image-urls: |
+      nginx:latest
+      ghcr.io/myorg/app:latest
+      mcr.microsoft.com/dotnet/aspnet:8.0
+      myregistry.azurecr.io/myapp:latest
 ```
 
 ## Working with Private Registries
@@ -140,10 +130,8 @@ For private registries, make sure Docker is authenticated before running this ac
 - name: Resolve Private Images
   uses: optivem/resolve-latest-docker-digests-action@v1
   with:
-    images: |
-      [
-        "ghcr.io/myorg/private-app:latest"
-      ]
+    image-urls: |
+      ghcr.io/myorg/private-app:latest
 ```
 
 ## Error Handling

@@ -21,10 +21,8 @@ jobs:
         uses: ./
         with:
           image-urls: |
-            [
-              "nginx:latest",
-              "hello-world:latest"
-            ]
+            nginx:latest
+            hello-world:latest
         continue-on-error: true
       
       - name: Show results

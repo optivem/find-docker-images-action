@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **BREAKING**: Repository renamed from `optivem/inspect-docker-action` to `optivem/resolve-latest-docker-digests-action`
+- **BREAKING**: Input parameter renamed from `images` to `image-urls` for clarity
+- **BREAKING**: Input format changed from JSON array to newline-separated list for better user experience
 - **BREAKING**: Simplified input format - now accepts array of image URLs instead of objects with repoOwner/repoName/imageName
 - **BREAKING**: Action now supports any Docker registry, not just GitHub Container Registry
 - Users should update their workflow files to use the new repository name: `optivem/resolve-latest-docker-digests-action@v1`
@@ -29,12 +31,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ```
 
 **New format (v2.0.0):**
-```json
-[
-  "ghcr.io/myorg/my-repo/my-app:latest",
-  "nginx:latest",
-  "mcr.microsoft.com/dotnet/aspnet:8.0"
-]
+```yaml
+image-urls: |
+  ghcr.io/myorg/my-repo/my-app:latest
+  nginx:latest
+  mcr.microsoft.com/dotnet/aspnet:8.0
 ```
 
 ## [1.0.0] - 2024-10-09
