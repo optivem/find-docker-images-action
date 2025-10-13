@@ -46,6 +46,7 @@ Works with any Docker-compatible registry:
 |--------|-------------|
 | `image-digest-urls` | JSON array of digest URLs in the same order as input |
 | `image-inspect-results` | JSON array of full Docker inspect results for each image in the same order as input |
+| `image-created-timestamps` | JSON array of image creation timestamps in the same order as input |
 
 ### Output Structure
 
@@ -76,6 +77,14 @@ Works with any Docker-compatible registry:
 ]
 ```
 
+**image-created-timestamps:**
+```json
+[
+  "2023-12-01T10:30:00Z",
+  "2023-11-28T14:45:22Z"
+]
+```
+
 ## Usage Examples
 
 ### Basic Example - Mixed Registries
@@ -97,10 +106,11 @@ jobs:
             ghcr.io/myorg/frontend:latest
             mcr.microsoft.com/dotnet/aspnet:8.0
       
-      - name: Use Resolved Digest URLs and Inspect Results
+      - name: Use Resolved Digest URLs, Inspect Results, and Timestamps
         run: |
           DIGESTS='${{ steps.resolve.outputs.image-digest-urls }}'
           INSPECT_RESULTS='${{ steps.resolve.outputs.image-inspect-results }}'
+          CREATED_TIMESTAMPS='${{ steps.resolve.outputs.image-created-timestamps }}'
           
           # Access specific images by index (maintains input order)
           NGINX_DIGEST=$(echo "$DIGESTS" | jq -r '.[0]')
@@ -119,6 +129,15 @@ jobs:
           echo "Nginx image size: $NGINX_SIZE bytes"
           echo "Nginx architecture: $NGINX_ARCH"
           echo "Nginx OS: $NGINX_OS"
+          
+          # Access creation timestamps
+          NGINX_CREATED=$(echo "$CREATED_TIMESTAMPS" | jq -r '.[0]')
+          FRONTEND_CREATED=$(echo "$CREATED_TIMESTAMPS" | jq -r '.[1]')
+          ASPNET_CREATED=$(echo "$CREATED_TIMESTAMPS" | jq -r '.[2]')
+          
+          echo "Nginx created: $NGINX_CREATED"
+          echo "Frontend created: $FRONTEND_CREATED"
+          echo "ASP.NET created: $ASPNET_CREATED"
           
           # Or iterate over all digest URLs
           echo "All digest URLs:"

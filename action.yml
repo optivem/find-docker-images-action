@@ -1,5 +1,5 @@
-name: 'Inspect Docker Images'
-description: 'Inspects Docker images and resolves their digests from any container registry'
+name: 'Find Docker Images'
+description: 'Finds Docker images and resolves their digests from any container registry'
 author: 'Optivem'
 branding:
   icon: 'search'
@@ -15,6 +15,9 @@ outputs:
   image-inspect-results:
     description: 'JSON array of full Docker inspect results for each image in the same order as input'
     value: ${{ steps.get-digests.outputs.inspect-data }}
+  image-created-timestamps:
+    description: 'JSON array of image creation timestamps in the same order as input'
+    value: ${{ steps.get-digests.outputs.created-timestamps }}
 runs:
   using: 'composite'
   steps:

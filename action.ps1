@@ -124,6 +124,7 @@ try {
     # Initialize results as arrays to preserve order
     $results = @()
     $inspectResults = @()
+    $createdTimestamps = @()
     
     # Process each image URL
     foreach ($imageUrl in $images) {
@@ -154,8 +155,12 @@ try {
             $digestUrl = $imageUrl + "@" + $digest
         }
         
+        # Extract creation timestamp from inspect data
+        $createdTimestamp = $inspectData.Created
+        
         $results += $digestUrl
         $inspectResults += $inspectData
+        $createdTimestamps += $createdTimestamp
     }
     
     # Output results
@@ -181,7 +186,15 @@ try {
         }
         "inspect-data=$inspectJsonOutput" | Out-File -FilePath $GitHubOutput -Append -Encoding utf8
         
-        Write-Host "JSON results and inspect data written to GitHub output"
+        # Output created timestamps - always as array format
+        if ($createdTimestamps.Count -eq 1) {
+            $timestampsJsonOutput = "[$($createdTimestamps[0] | ConvertTo-Json -Compress)]"
+        } else {
+            $timestampsJsonOutput = $createdTimestamps | ConvertTo-Json -Compress
+        }
+        "created-timestamps=$timestampsJsonOutput" | Out-File -FilePath $GitHubOutput -Append -Encoding utf8
+        
+        Write-Host "JSON results, inspect data, and created timestamps written to GitHub output"
     }
     
     # Log full output
@@ -203,6 +216,15 @@ try {
         $formattedInspectOutput = $inspectResults | ConvertTo-Json -Depth 10
     }
     Write-Output $formattedInspectOutput
+    
+    Write-Host ""
+    Write-Host "Created Timestamps:"
+    if ($createdTimestamps.Count -eq 1) {
+        $formattedTimestampsOutput = "[$($createdTimestamps[0] | ConvertTo-Json -Depth 10)]"
+    } else {
+        $formattedTimestampsOutput = $createdTimestamps | ConvertTo-Json -Depth 10
+    }
+    Write-Output $formattedTimestampsOutput
     
     Write-Host ""
     Write-Host "Batch digest resolution completed successfully!"
